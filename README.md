@@ -50,9 +50,8 @@ If you're following along, feel free to fork this repo, open issues, or share su
 ## 📅 Current Status
 
 - [x] GitHub repo set up
-- [x] `.gitignore` added for ESPHome
 - [x] README started
 - [ ] Wiring and pinout documentation
-- [ ] Firmware prototype (ESPHome and/or Arduino)
+- [ ] Firmware prototype
 - [ ] 3D printed enclosure design
 

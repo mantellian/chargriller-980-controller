@@ -22,7 +22,7 @@ So I'm building my own.
 
 ---
 
-## 🔌 Potential Hardware
+##  Potential Hardware
 
 | Component                     | Purpose               | Notes                                           |
 |------------------------------|-----------------------|-------------------------------------------------|
@@ -35,4 +35,24 @@ So I'm building my own.
 | 12V to 3.3V Buck Converter    | Power for ESP32       | LM2596 or equivalent                             |
 | Panel Connectors / Grommets   | Wiring connections    | Will aim for weather resistance                  |
 | 3D Printed Enclosure         | Protects everything   | Printed in PETG or ASA                            |
+
+
+---
+
+## A Note from Me
+
+Just a heads up — I’m not a programmer. I’ve done a few simple ESPHome and Tasmota projects in the past, but nothing this complex. I’m figuring things out as I go and using **AI** to help guide the process.
+
+If you're following along, feel free to fork this repo, open issues, or share suggestions. And if you're better at coding or electronics than I am (which you probably are), feel free to help fix my mistakes.
+
+---
+
+## 📅 Current Status
+
+- [x] GitHub repo set up
+- [x] `.gitignore` added for ESPHome
+- [x] README started
+- [ ] Wiring and pinout documentation
+- [ ] Firmware prototype (ESPHome and/or Arduino)
+- [ ] 3D printed enclosure design
 

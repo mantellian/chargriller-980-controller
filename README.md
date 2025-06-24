@@ -1,6 +1,6 @@
 # Char-Griller 980 DIY Controller (Work in Progress)
 
-⚠️ **Work in progress!** This project is still under development, and things will likely break, change, or get scrapped as I go.
+**Work in progress!** This project is still under development, and things will likely break, change, or get scrapped as I go.
 
 The goal here is to build a drop-in replacement controller for my Char-Griller Gravity Fed 980 using an ESP32. The original controller has started randomly shutting off during cooks, sometimes it's fine, other times it dies mid-session. That just doesn't work.
 
@@ -8,7 +8,7 @@ So I'm building my own.
 
 ---
 
-## 🔧 Project Goals
+## Project Goals
 
 - Work completely on its own  **no Home Assistant required**
 - Control a **12V variable-speed fan** using PID logic
@@ -47,7 +47,7 @@ If you're following along, feel free to fork this repo, open issues, or share su
 
 ---
 
-## 📅 Current Status
+## Current Status
 
 - [x] GitHub repo set up
 - [x] README started

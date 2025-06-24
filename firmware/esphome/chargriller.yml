@@ -1,1 +1,56 @@
-###
+esphome:
+  name: chargriller_controller
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: "YOUR_WIFI_SSID"
+  password: "YOUR_WIFI_PASSWORD"
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "CharGriller Controller Fallback"
+    password: "fallback_password"
+
+logger:
+
+api:
+  password: "api_password"
+
+ota:
+  password: "ota_password"
+
+sensor:
+  - platform: dallas
+    address: 0xADDRESS_HERE
+    name: "Grill Temperature"
+    id: grill_temp
+    update_interval: 5s
+
+output:
+  - platform: ledc
+    id: fan_pwm
+    pin: GPIO15
+    frequency: 25000 Hz
+    inverted: false
+
+fan:
+  - platform: speed
+    output: fan_pwm
+    id: grill_fan
+    name: "Grill Fan"
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          // Read temperature and implement simple control logic here
+          float current_temp = id(grill_temp).state;
+          float target_temp = 225.0; // target temp in °F or °C depending on sensor config
+
+          if (current_temp < target_temp) {
+            // Turn fan on at 100%
+            id(grill_fan).set_speed(1.0);
+          } else {
+            // Turn fan off
+            id(grill_fan).set_speed(0.0);
+          }

@@ -1,0 +1,11 @@
+# ESPHome build files
+build/
+.esphome/
+
+# Compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+secrets.yaml

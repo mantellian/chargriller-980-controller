@@ -95,7 +95,7 @@ sensor:
               - globals.set:
                   id: error_code
                   value: '"ERF"'
-              - script.execute: alert_buzzer
+              - script.execute: alert_sos
 
   # WiFi signal strength
   - platform: wifi_signal
@@ -220,10 +220,10 @@ output:
     min_power: 0.0
     max_power: 1.0
 
-  # Buzzer output
+  # Beeper output
   - platform: gpio
     pin: GPIO4
-    id: buzzer_output
+    id: beeper_output
 
 # Fan speed control (for monitoring)
 number:
@@ -297,16 +297,50 @@ switch:
 
 # Scripts
 script:
-  - id: alert_buzzer
+  - id: alert_sos
     mode: single
     then:
-      - output.turn_on: buzzer_output
-      - delay: 200ms
-      - output.turn_off: buzzer_output
-      - delay: 200ms
-      - output.turn_on: buzzer_output
-      - delay: 200ms
-      - output.turn_off: buzzer_output
+      # S: dot dot dot (3 short beeps)
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 350ms  # Gap between letters
+      
+      # O: dash dash dash (3 long beeps)
+      - output.turn_on: beeper_output
+      - delay: 450ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 450ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 450ms
+      - output.turn_off: beeper_output
+      - delay: 350ms  # Gap between letters
+      
+      # S: dot dot dot (3 short beeps)
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 150ms
+      - output.turn_on: beeper_output
+      - delay: 150ms
+      - output.turn_off: beeper_output
+      - delay: 1000ms  # Long pause before repeat
 
   - id: update_displays
     mode: single

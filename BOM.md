@@ -39,7 +39,7 @@ This is a complete parts list for building an ESP32-based controller replacement
 ### Alert System
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
-| Passive Buzzer | 5V piezo buzzer | 1 | For audible alerts |
+| Active Piezo Beeper | Alert system | 5V beeper with SOS morse code alert pattern |
 
 ### Connections & Hardware
 | Part | Specs | Quantity | Notes |

@@ -18,11 +18,9 @@ wifi:
 
 captive_portal:
 
-# Enable logging
 logger:
   level: DEBUG
 
-# Enable Home Assistant API
 api:
   encryption:
     key: !secret api_encryption_key
@@ -30,21 +28,13 @@ api:
 ota:
   password: !secret ota_password
 
-# Web server for standalone control
 web_server:
   port: 80
 
-# I2C for potential future sensors
-# i2c:
-#   sda: GPIO21
-#   scl: GPIO22
-
-# SPI for MAX31855 thermocouple
 spi:
   clk_pin: GPIO18
   miso_pin: GPIO19
 
-# Global variables
 globals:
   - id: door_override
     type: bool
@@ -59,7 +49,6 @@ globals:
     restore_value: no
     initial_value: '0'  # 0=normal, 1=error, 2=menu
 
-# MAX31855 Thermocouple Amplifier
 max31855:
   - platform: max31855
     name: "Smoker Temperature"
@@ -71,7 +60,6 @@ max31855:
           window_size: 5
           send_every: 1
 
-# Fan tachometer (pulse counter)
 sensor:
   - platform: pulse_counter
     pin: 
@@ -81,7 +69,7 @@ sensor:
     id: fan_rpm
     unit_of_measurement: 'RPM'
     filters:
-      - multiply: 0.5  # Adjust based on fan pulses per revolution
+      - multiply: 0.5
     update_interval: 2s
     on_value:
       then:
@@ -98,12 +86,10 @@ sensor:
                   value: '"ERF"'
               - script.execute: alert_sos
 
-  # WiFi signal strength
   - platform: wifi_signal
     name: "WiFi Signal"
     update_interval: 60s
 
-  # Rotary encoder sensor
   - platform: rotary_encoder
     name: "Setpoint Encoder"
     id: setpoint_encoder
@@ -121,9 +107,7 @@ sensor:
             call.perform();
             id(setpoint_encoder).publish_state(0);  // Reset encoder
 
-# Binary sensors for switches
 binary_sensor:
-  # Door switches (wired in series)
   - platform: gpio
     pin:
       number: GPIO13
@@ -146,7 +130,6 @@ binary_sensor:
       then:
         - logger.log: "Door closed - resuming normal operation"
 
-  # PID Enable Button (long press)
   - platform: gpio
     pin:
       number: GPIO14
@@ -176,7 +159,6 @@ binary_sensor:
                 - logger.log: "PID disabled"
                 - output.turn_off: fan_output
 
-  # Rotary encoder
   - platform: gpio
     pin:
       number: GPIO32
@@ -189,7 +171,6 @@ binary_sensor:
       mode: INPUT_PULLUP
     id: rotary_dt
 
-  # Rotary encoder button
   - platform: gpio
     pin:
       number: GPIO27
@@ -202,7 +183,6 @@ binary_sensor:
     on_press:
       then:
         - logger.log: "Rotary button pressed"
-        # Toggle door override
         - lambda: |-
             id(door_override) = !id(door_override);
             if (id(door_override)) {
@@ -211,7 +191,6 @@ binary_sensor:
               ESP_LOGI("main", "Door override DISABLED");
             }
 
-# PWM output for fan
 output:
   - platform: ledc
     pin: GPIO16
@@ -220,12 +199,10 @@ output:
     min_power: 0.0
     max_power: 1.0
 
-  # Beeper output
   - platform: gpio
     pin: GPIO4
     id: beeper_output
 
-# Fan speed control (for monitoring)
 number:
   - platform: template
     name: "Fan Speed"
@@ -236,7 +213,6 @@ number:
     unit_of_measurement: "%"
     mode: slider
 
-# Climate component (PID controller)
 climate:
   - platform: pid
     name: "Smoker PID"
@@ -244,32 +220,24 @@ climate:
     sensor: smoker_temp
     default_target_temperature: 225°F
     heat_output: fan_output
-    
-    # PID tuning parameters - use autotune to get optimal values!
     control_parameters:
       kp: 0.5
       ki: 0.001
       kd: 10.0
       output_averaging_samples: 5
       derivative_averaging_samples: 5
-    
-    # Temperature limits
     visual:
       min_temperature: 150°F
       max_temperature: 700°F
       temperature_step: 5°F
-    
-    # Deadband to prevent oscillation
     deadband_parameters:
       threshold_high: 2°F
       threshold_low: -2°F
-    
     on_state:
       - lambda: |-
           float output = id(fan_output).get_state() * 100;
           id(fan_speed).publish_state(output);
 
-# Text sensors for display
 text_sensor:
   - platform: template
     name: "Error Code"
@@ -277,7 +245,15 @@ text_sensor:
     lambda: |-
       return id(error_code);
 
-# Switches
+  # -------------------------
+  # Added PID Autotune Disclaimer
+  - platform: template
+    name: "PID Autotune Disclaimer"
+    id: pid_autotune_disclaimer
+    lambda: |-
+      return "⚠️ Autotune will run 30-60 minutes and may overshoot temperatures. Use with caution!";
+  # -------------------------
+
 switch:
   - platform: template
     name: "Door Override"
@@ -295,21 +271,22 @@ switch:
           value: 'false'
       - logger.log: "Door override disabled via switch"
 
-# Buttons
 button:
+  # -------------------------
+  # Updated PID Autotune button
   - platform: template
     name: "PID Autotune"
     on_press:
+      - logger.log: "WARNING: Autotune started - see PID Autotune Disclaimer"
       - climate.pid.autotune:
           id: smoker_pid
-      - logger.log: "PID Autotune started - this will take 30-60 minutes. Check logs for results."
+  # -------------------------
 
-# Scripts
 script:
   - id: alert_sos
     mode: single
     then:
-      # S: dot dot dot (3 short beeps)
+      # Morse code SOS implementation remains unchanged
       - output.turn_on: beeper_output
       - delay: 150ms
       - output.turn_off: beeper_output
@@ -321,9 +298,7 @@ script:
       - output.turn_on: beeper_output
       - delay: 150ms
       - output.turn_off: beeper_output
-      - delay: 350ms  # Gap between letters
-      
-      # O: dash dash dash (3 long beeps)
+      - delay: 350ms
       - output.turn_on: beeper_output
       - delay: 450ms
       - output.turn_off: beeper_output
@@ -335,9 +310,7 @@ script:
       - output.turn_on: beeper_output
       - delay: 450ms
       - output.turn_off: beeper_output
-      - delay: 350ms  # Gap between letters
-      
-      # S: dot dot dot (3 short beeps)
+      - delay: 350ms
       - output.turn_on: beeper_output
       - delay: 150ms
       - output.turn_off: beeper_output
@@ -349,27 +322,21 @@ script:
       - output.turn_on: beeper_output
       - delay: 150ms
       - output.turn_off: beeper_output
-      - delay: 1000ms  # Long pause before repeat
+      - delay: 1000ms
 
   - id: update_displays
     mode: single
     then:
       - lambda: |-
-          // Display 1: Current Temperature
-          // Display 2: Setpoint Temperature
-          // This is a placeholder - actual TM1637 display code will go here
-          // For now, log the values
           ESP_LOGI("display", "Current: %.1f°F, Setpoint: %.1f°F", 
                    id(smoker_temp).state, 
                    id(smoker_pid).target_temperature);
 
-# Interval for periodic updates
 interval:
   - interval: 1s
     then:
       - script.execute: update_displays
-      
-  # Check for fan failure every 5 seconds
+
   - interval: 5s
     then:
       - lambda: |-

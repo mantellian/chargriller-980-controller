@@ -103,6 +103,24 @@ sensor:
     name: "WiFi Signal"
     update_interval: 60s
 
+  # Rotary encoder sensor
+  - platform: rotary_encoder
+    name: "Setpoint Encoder"
+    id: setpoint_encoder
+    pin_a: GPIO32
+    pin_b: GPIO33
+    resolution: 2
+    on_value:
+      then:
+        - lambda: |-
+            float current_target = id(smoker_pid).target_temperature;
+            float new_target = current_target + (x * 5);  // 5 degree increments
+            new_target = std::max(150.0f, std::min(700.0f, new_target));
+            auto call = id(smoker_pid).make_call();
+            call.set_target_temperature(new_target);
+            call.perform();
+            id(setpoint_encoder).publish_state(0);  // Reset encoder
+
 # Binary sensors for switches
 binary_sensor:
   # Door switches (wired in series)
@@ -193,25 +211,6 @@ binary_sensor:
               ESP_LOGI("main", "Door override DISABLED");
             }
 
-# Rotary encoder sensor
-sensor:
-  - platform: rotary_encoder
-    name: "Setpoint Encoder"
-    id: setpoint_encoder
-    pin_a: GPIO32
-    pin_b: GPIO33
-    resolution: 2
-    on_value:
-      then:
-        - lambda: |-
-            float current_target = id(smoker_pid).target_temperature;
-            float new_target = current_target + (x * 5);  // 5 degree increments
-            new_target = std::max(150.0f, std::min(700.0f, new_target));
-            auto call = id(smoker_pid).make_call();
-            call.set_target_temperature(new_target);
-            call.perform();
-            id(setpoint_encoder).publish_state(0);  // Reset encoder
-
 # PWM output for fan
 output:
   - platform: ledc
@@ -246,7 +245,7 @@ climate:
     default_target_temperature: 225°F
     heat_output: fan_output
     
-    # PID tuning parameters - THESE NEED TUNING!
+    # PID tuning parameters - use autotune to get optimal values!
     control_parameters:
       kp: 0.5
       ki: 0.001
@@ -295,6 +294,15 @@ switch:
           id: door_override
           value: 'false'
       - logger.log: "Door override disabled via switch"
+
+# Buttons
+button:
+  - platform: template
+    name: "PID Autotune"
+    on_press:
+      - climate.pid.autotune:
+          id: smoker_pid
+      - logger.log: "PID Autotune started - this will take 30-60 minutes. Check logs for results."
 
 # Scripts
 script:

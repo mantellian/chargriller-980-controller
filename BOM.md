@@ -1,12 +1,14 @@
 # CharGriller 980 ESP32 Controller - Bill of Materials (BOM)
 
+This is a complete parts list for building an ESP32-based controller replacement for the CharGriller Gravity 980 smoker.
+
 ## Required Components
 
 ### Microcontroller
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
-| ESP32 Dev Board with External Antenna | U.FL/IPEX connector | 1 | ESP32-DevKitC or similar |
-| 2.4GHz WiFi Antenna with U.FL connector | 3-5dBi gain | 1 | RP-SMA or direct U.FL |
+| ESP32-DevKitC with ESP32-WROOM-32U | 38-pin, U.FL/IPEX connector | 1 | Must be 32U variant (not 32D) for external antenna |
+| 2.4GHz WiFi Antenna with U.FL connector | 3-5dBi gain | 1 | RP-SMA bulkhead or direct U.FL mount |
 
 ### Temperature Sensing
 | Part | Specs | Quantity | Notes |
@@ -39,6 +41,15 @@
 |------|-------|----------|-------|
 | Passive Buzzer | 5V piezo buzzer | 1 | For audible alerts |
 
+### Connections & Hardware
+| Part | Specs | Quantity | Notes |
+|------|-------|----------|-------|
+| Screw Terminal Blocks | 2-pin, 5.08mm pitch | 5-6 | For removable connections |
+| Perfboard | 7x9cm or larger | 1 | For prototyping |
+| Dupont Wire Kit | Male/Female/Male-Male | 1 kit | Various connections |
+| Heat Shrink Tubing | Assorted sizes | 1 kit | Wire protection |
+| M3 Hardware Kit | Screws, nuts, standoffs | 1 kit | PCB/display mounting |
+
 ### Enclosure
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
@@ -53,6 +64,11 @@
 |------|-------|----------|-------|
 | 40mm Cooling Fan | 5V, quiet operation | 1 | For hot climates |
 
+### Future Fan Upgrade
+| Part | Specs | Quantity | Notes |
+|------|-------|----------|-------|
+| Centrifugal Blower Fan | 12V, similar CFM to stock | 1 | Better than stock axial fan |
+
 ## Original Equipment (Not Included)
 
 These parts are reused from your existing CharGriller 980:
@@ -60,3 +76,9 @@ These parts are reused from your existing CharGriller 980:
 - Fan (12V, 3-wire with tachometer)
 - Door switches (2x, normally closed)
 - 12V power supply
+
+---
+
+**Last Updated**: November 2025  
+**License**: MIT (see LICENSE file)  
+**Maintainer**: mantellian

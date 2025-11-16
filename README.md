@@ -37,7 +37,7 @@ So I'm building my own.
 | KY-040 Rotary Encoder | Setpoint adjustment | With integrated push button for door override |
 | Momentary Push Button | PID enable/disable | Long-press to toggle |
 | MOSFET Module | Fan PWM control | IRF520 or similar, handles 12V fan |
-| Passive Buzzer | Alert system | 5V piezo for error notifications |
+| Active Piezo Beeper | Alert system | 5V beeper with SOS morse code alert pattern |
 | 12V to 5V Buck Converter | Power for ESP32 | LM2596 or MP1584 based, 2A+ output |
 | OEM 12V Fan | Fire control | 3-wire with tachometer feedback |
 | OEM Temperature Probe | Chamber temp sensing | K-type thermocouple, reused from original |

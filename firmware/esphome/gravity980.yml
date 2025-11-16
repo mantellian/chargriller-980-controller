@@ -6,9 +6,10 @@ esphome:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  power_save_mode: none  # Disable power saving for best WiFi performance
   
-  # Use external antenna for better range
-  # power_save_mode: none  # Uncomment for better responsiveness
+  # Use static IP if your grill is on a different subnet or for more reliable connections
+  # use_address: 192.168.1.100 # Uncomment and set your desired IP address:
   
   # Enable fallback hotspot in case wifi connection fails
   ap:

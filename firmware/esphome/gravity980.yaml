@@ -6,12 +6,7 @@ esphome:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  power_save_mode: none  # Disable power saving for best WiFi performance
-  
-  # Use static IP if your grill is on a different subnet or for more reliable connections
-  # use_address: 192.168.1.100 # Uncomment and set your desired IP address:
-  
-  # Enable fallback hotspot in case wifi connection fails
+  power_save_mode: none
   ap:
     ssid: "CharGriller-980"
     password: "chargriller980"
@@ -47,8 +42,11 @@ globals:
   - id: display_mode
     type: int
     restore_value: no
-    initial_value: '0'  # 0=normal, 1=error, 2=menu
+    initial_value: '0'
 
+# --------------------------
+# Temperature Sensor
+# --------------------------
 max31855:
   - platform: max31855
     name: "Smoker Temperature"
@@ -60,9 +58,12 @@ max31855:
           window_size: 5
           send_every: 1
 
+# --------------------------
+# Fan RPM Sensor
+# --------------------------
 sensor:
   - platform: pulse_counter
-    pin: 
+    pin:
       number: GPIO17
       mode: INPUT_PULLUP
     name: "Fan RPM"
@@ -73,18 +74,7 @@ sensor:
     update_interval: 2s
     on_value:
       then:
-        - if:
-            condition:
-              lambda: |-
-                return id(smoker_pid).mode != CLIMATE_MODE_OFF && 
-                       id(fan_speed).state > 20 && 
-                       x < 300;  // RPM threshold for error
-            then:
-              - logger.log: "Fan failure detected!"
-              - globals.set:
-                  id: error_code
-                  value: '"ERF"'
-              - script.execute: alert_sos
+        - script.execute: check_fan
 
   - platform: wifi_signal
     name: "WiFi Signal"
@@ -100,13 +90,16 @@ sensor:
       then:
         - lambda: |-
             float current_target = id(smoker_pid).target_temperature;
-            float new_target = current_target + (x * 5);  // 5 degree increments
+            float new_target = current_target + (x * 5);
             new_target = std::max(150.0f, std::min(700.0f, new_target));
             auto call = id(smoker_pid).make_call();
             call.set_target_temperature(new_target);
             call.perform();
-            id(setpoint_encoder).publish_state(0);  // Reset encoder
+            id(setpoint_encoder).publish_state(0);
 
+# --------------------------
+# Binary Sensors
+# --------------------------
 binary_sensor:
   - platform: gpio
     pin:
@@ -134,11 +127,10 @@ binary_sensor:
     pin:
       number: GPIO14
       mode: INPUT_PULLUP
-      inverted: true
+      filters:
+        - delayed_on: 50ms
     name: "PID Enable Button"
     id: pid_button
-    filters:
-      - delayed_on: 50ms
     on_multi_click:
       - timing:
           - ON for at least 2s
@@ -155,21 +147,9 @@ binary_sensor:
               else:
                 - climate.control:
                     id: smoker_pid
-                    mode: "OFF"
+                    mode: OFF
                 - logger.log: "PID disabled"
                 - output.turn_off: fan_output
-
-  - platform: gpio
-    pin:
-      number: GPIO32
-      mode: INPUT_PULLUP
-    id: rotary_clk
-    
-  - platform: gpio
-    pin:
-      number: GPIO33
-      mode: INPUT_PULLUP
-    id: rotary_dt
 
   - platform: gpio
     pin:
@@ -191,6 +171,9 @@ binary_sensor:
               ESP_LOGI("main", "Door override DISABLED");
             }
 
+# --------------------------
+# Outputs
+# --------------------------
 output:
   - platform: ledc
     pin: GPIO16
@@ -203,6 +186,9 @@ output:
     pin: GPIO4
     id: beeper_output
 
+# --------------------------
+# Fan Speed Slider
+# --------------------------
 number:
   - platform: template
     name: "Fan Speed"
@@ -213,6 +199,9 @@ number:
     unit_of_measurement: "%"
     mode: slider
 
+# --------------------------
+# PID Climate Control
+# --------------------------
 climate:
   - platform: pid
     name: "Smoker PID"
@@ -238,6 +227,31 @@ climate:
           float output = id(fan_output).get_state() * 100;
           id(fan_speed).publish_state(output);
 
+# --------------------------
+# TM1637 4-Digit LED Displays
+# --------------------------
+display:
+  - platform: tm1637
+    id: display_current
+    clk_pin: GPIO25
+    dio_pin: GPIO26
+    brightness: 7
+    update_interval: 1s
+    lambda: |-
+      it.print(0, id(smoker_temp).state);
+
+  - platform: tm1637
+    id: display_setpoint
+    clk_pin: GPIO27
+    dio_pin: GPIO14
+    brightness: 7
+    update_interval: 1s
+    lambda: |-
+      it.print(0, id(smoker_pid).target_temperature);
+
+# --------------------------
+# Text Sensors
+# --------------------------
 text_sensor:
   - platform: template
     name: "Error Code"
@@ -245,15 +259,15 @@ text_sensor:
     lambda: |-
       return id(error_code);
 
-  # -------------------------
-  # Added PID Autotune Disclaimer
   - platform: template
     name: "PID Autotune Disclaimer"
     id: pid_autotune_disclaimer
     lambda: |-
       return "⚠️ Autotune will run 30-60 minutes and may overshoot temperatures. Use with caution!";
-  # -------------------------
 
+# --------------------------
+# Switches
+# --------------------------
 switch:
   - platform: template
     name: "Door Override"
@@ -271,58 +285,43 @@ switch:
           value: 'false'
       - logger.log: "Door override disabled via switch"
 
+# --------------------------
+# Buttons
+# --------------------------
 button:
-  # -------------------------
-  # Updated PID Autotune button
   - platform: template
     name: "PID Autotune"
     on_press:
       - logger.log: "WARNING: Autotune started - see PID Autotune Disclaimer"
       - climate.pid.autotune:
           id: smoker_pid
-  # -------------------------
 
+# --------------------------
+# Scripts
+# --------------------------
 script:
   - id: alert_sos
     mode: single
     then:
-      # Morse code SOS implementation remains unchanged
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 350ms
-      - output.turn_on: beeper_output
-      - delay: 450ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 450ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 450ms
-      - output.turn_off: beeper_output
-      - delay: 350ms
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 150ms
-      - output.turn_on: beeper_output
-      - delay: 150ms
-      - output.turn_off: beeper_output
-      - delay: 1000ms
+      - lambda: |-
+          int pattern[] = {150,150,150,350,450,450,450,350,150,150,150,150,150,150};
+          for(int i=0;i<14;i++){
+            output.turn_on(id(beeper_output));
+            delay(pattern[i]);
+            output.turn_off(id(beeper_output));
+            delay(pattern[i]);
+          }
+
+  - id: check_fan
+    mode: single
+    then:
+      - lambda: |-
+          if(id(smoker_pid).mode != CLIMATE_MODE_OFF && id(fan_speed).state > 20 && id(fan_rpm).state < 300) {
+            id(error_code) = "ERF";
+            script.execute(alert_sos);
+          } else if(id(error_code) == "ERF" && id(fan_rpm).state >= 300) {
+            id(error_code) = "";
+          }
 
   - id: update_displays
     mode: single
@@ -332,6 +331,9 @@ script:
                    id(smoker_temp).state, 
                    id(smoker_pid).target_temperature);
 
+# --------------------------
+# Intervals
+# --------------------------
 interval:
   - interval: 1s
     then:
@@ -339,11 +341,4 @@ interval:
 
   - interval: 5s
     then:
-      - lambda: |-
-          if (id(smoker_pid).mode != CLIMATE_MODE_OFF && 
-              id(fan_speed).state > 20 && 
-              id(fan_rpm).state < 300) {
-            id(error_code) = "ERF";
-          } else if (id(error_code) == "ERF" && id(fan_rpm).state >= 300) {
-            id(error_code) = "";  // Clear error
-          }
+      - script.execute: check_fan

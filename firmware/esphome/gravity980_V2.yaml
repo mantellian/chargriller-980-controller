@@ -75,6 +75,10 @@ globals:
     type: bool
     restore_value: no
     initial_value: 'false'
+  - id: current_fan_duty
+    type: float
+    restore_value: no
+    initial_value: '0.0'
 
 # -------------------------------------------------------
 # SPI – MAX31855 Thermocouple Amplifier
@@ -310,6 +314,10 @@ output:
     pin: GPIO16
     frequency: 25000 Hz
     id: fan_pwm
+    on_turn_on:
+      - lambda: 'id(current_fan_duty) = 1.0;'
+    on_turn_off:
+      - lambda: 'id(current_fan_duty) = 0.0;'
 
 fan:
   - platform: speed
@@ -327,6 +335,10 @@ climate:
     sensor: pit_temp
     default_target_temperature: 225°F
     heat_output: fan_pwm
+    on_state:
+      - lambda: |-
+          // Track the climate output for fan monitoring
+          id(current_fan_duty) = x;
     
     # PID tuning parameters (starting values - use autotune!)
     control_parameters:
@@ -458,11 +470,11 @@ interval:
     then:
       - lambda: |-
           auto climate_mode = id(grill_climate).mode;
-          float fan_speed = id(fan_pwm).get_state();
+          float fan_duty = id(current_fan_duty);
           float rpm = id(fan_rpm).state;
           
-          // Check if fan should be running (climate in HEAT mode and PWM > 10%)
-          bool fan_should_run = (climate_mode == CLIMATE_MODE_HEAT) && (fan_speed > 0.10);
+          // Check if fan should be running (climate in HEAT mode and duty cycle > 10%)
+          bool fan_should_run = (climate_mode == CLIMATE_MODE_HEAT) && (fan_duty > 0.10);
           bool fan_is_running = rpm >= 100.0;
           
           if (fan_should_run && !fan_is_running) {
@@ -471,7 +483,7 @@ interval:
               id(alarm_silenced) = false;
               id(buzzer_switch).turn_on();
               id(alarm_beep).execute();
-              ESP_LOGE("alarm", "FAN ERROR: Fan should be running but RPM=%.0f", rpm);
+              ESP_LOGE("alarm", "FAN ERROR: Fan should be running but RPM=%.0f (duty=%.1f%%)", rpm, fan_duty * 100);
             }
           } else {
             if (id(fan_error_active) && fan_is_running) {

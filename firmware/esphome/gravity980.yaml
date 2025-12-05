@@ -1,14 +1,23 @@
 esphome:
   name: chargriller-980
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(temp_setpoint_value) = 225.0;
+          id(pending_setpoint) = 225.0;
+          id(setpoint_being_adjusted) = false;
 
 esp32:
   board: esp32dev
   framework:
     type: arduino
+  variant: esp32
 
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
+  min_auth_mode: WPA2
   power_save_mode: none
   ap:
     ssid: "CharGriller-980"
@@ -29,6 +38,54 @@ ota:
 
 web_server:
   port: 80
+  version: 3
+  sorting_groups:
+    - id: main_controls_group
+      name: "Main Controls"
+      sorting_weight: 1
+    - id: diagnostics_group
+      name: "Diagnostics"
+      sorting_weight: 2
+    - id: pid_autotune_group
+      name: "PID Autotune"
+      sorting_weight: 3
+
+# -------------------------------------------------------
+# Global Variables
+# -------------------------------------------------------
+globals:
+  - id: temp_setpoint_value
+    type: float
+    restore_value: yes
+    initial_value: '225.0'
+  - id: pending_setpoint
+    type: float
+    restore_value: no
+    initial_value: '225.0'
+  - id: setpoint_being_adjusted
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: buzzer_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: alarm_silenced
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: current_fan_duty
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+
+# -------------------------------------------------------
+# I2C Bus
+# -------------------------------------------------------
+i2c:
+  sda: GPIO21
+  scl: GPIO17
+  scan: true
 
 # -------------------------------------------------------
 # SPI – MAX31855 Thermocouple Amplifier
@@ -41,46 +98,111 @@ sensor:
   # MAX31855 thermocouple
   - platform: max31855
     name: "Pit Temperature"
-    cs_pin: GPIO21
+    cs_pin: GPIO14
     update_interval: 1s
     id: pit_temp
+    filters:
+      - lambda: return (x * 1.8) + 32;
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+    unit_of_measurement: "°F"
+    on_value:
+      then:
+        - lambda: |-
+            if (x >= 800.0) {
+              id(grill_climate).mode = CLIMATE_MODE_OFF;
+              ESP_LOGW("safety", "EMERGENCY: Temperature exceeded 800°F! Shutting down.");
+            }
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 0
 
-  # Fan Tachometer
-  - platform: pulse_counter
-    pin: GPIO17
-    name: "Fan RPM"
-    unit_of_measurement: "RPM"
-    update_interval: 1s
-    id: fan_rpm
+  # INA219 Fan Current Sensor
+  - platform: ina219
+    address: 0x40
+    current:
+      name: "Fan Current"
+      id: fan_current
+      web_server:
+        sorting_group_id: diagnostics_group
+        sorting_weight: 10
+    update_interval: 5s
 
   # Rotary Encoder
   - platform: rotary_encoder
-    name: "Temp Setpoint"
-    id: temp_setpoint
-    pin_a: GPIO32
-    pin_b: GPIO33
-    min_value: 0
-    max_value: 450
+    name: "Encoder Position"
+    id: encoder_position
+    internal: true
+    pin_a: 
+      number: GPIO32
+      mode: INPUT_PULLUP
+    pin_b: 
+      number: GPIO33
+      mode: INPUT_PULLUP
+    min_value: 175
+    max_value: 750
     resolution: 1
+    on_value:
+      then:
+        - lambda: |-
+            id(pending_setpoint) = x;
+            id(setpoint_being_adjusted) = true;
+        - script.execute: setpoint_timeout
+
+# -------------------------------------------------------
+# Text Sensors - REMOVED (causing linker issues)
+# Use the actual sensors and switches directly in the web interface
+# -------------------------------------------------------
 
 # -------------------------------------------------------
 # TM1637 Displays
 # -------------------------------------------------------
 display:
+  # Current temperature or error code
   - platform: tm1637
     id: tm1637_current
     clk_pin: GPIO23
     dio_pin: GPIO26
     update_interval: 0.5s
+    lambda: |-
+      if (id(fan_error_active).state) {
+        it.print("Err");
+      } else if (id(lid_switch).state) {
+        it.print("d00r");
+      } else if (id(high_temp_alarm_active).state) {
+        it.print(" Hl");
+      } else if (id(low_temp_alarm_active).state) {
+        it.print(" L0");
+      } else if (!isnan(id(pit_temp).state)) {
+        it.printf("%.0f", id(pit_temp).state);
+      } else {
+        it.print("---");
+      }
 
+  # Setpoint display
   - platform: tm1637
     id: tm1637_setpoint
-    clk_pin: GPIO5
+    clk_pin: GPIO25
     dio_pin: GPIO22
     update_interval: 0.5s
+    lambda: |-
+      if (id(fan_error_active).state) {
+        it.print("FAn");
+      } else if (id(lid_switch).state) {
+        it.print("0PEn");
+      } else if (id(high_temp_alarm_active).state) {
+        it.print("rEnP");
+      } else if (id(low_temp_alarm_active).state) {
+        it.print("rEnP");
+      } else if (id(setpoint_being_adjusted)) {
+        it.printf("%.0f", id(pending_setpoint));
+      } else {
+        it.printf("%.0f", id(temp_setpoint_value));
+      }
 
 # -------------------------------------------------------
-# Door Switch & Encoder Button
+# Binary Sensors
 # -------------------------------------------------------
 binary_sensor:
   # Door switch
@@ -91,8 +213,19 @@ binary_sensor:
     id: lid_switch
     name: "Lid Switch"
     device_class: opening
-    filters:
-      - invert: {}
+    on_press:
+      then:
+        - climate.control:
+            id: grill_climate
+            mode: "OFF"
+    on_release:
+      then:
+        - climate.control:
+            id: grill_climate
+            mode: "HEAT"
+    web_server:
+      sorting_group_id: diagnostics_group
+      sorting_weight: 11
 
   # Encoder push button
   - platform: gpio
@@ -101,11 +234,115 @@ binary_sensor:
       mode: INPUT_PULLUP
     id: encoder_button
     name: "Encoder Button"
+    internal: true
     filters:
       - invert: {}
+    on_press:
+      then:
+        - lambda: |-
+            bool any_alarm = id(fan_error_active).state || id(high_temp_alarm_active).state ||
+                             id(low_temp_alarm_active).state || id(buzzer_switch).state;
+            if (any_alarm) {
+              id(alarm_silenced) = true;
+              id(buzzer_switch).turn_off();
+              ESP_LOGI("buzzer", "Alarm silenced via encoder button");
+            } else if (id(setpoint_being_adjusted)) {
+              id(temp_setpoint_value) = id(pending_setpoint);
+              id(setpoint_being_adjusted) = false;
+              auto call = id(grill_climate).make_call();
+              call.set_target_temperature(id(temp_setpoint_value));
+              call.perform();
+              ESP_LOGI("setpoint", "Temperature setpoint confirmed: %.0f°F", id(temp_setpoint_value));
+            }
 
 # -------------------------------------------------------
-# Fan PWM Output
+# Scripts
+# -------------------------------------------------------
+script:
+  - id: setpoint_timeout
+    mode: restart
+    then:
+      - delay: 5s
+      - lambda: |-
+          if (id(setpoint_being_adjusted)) {
+            id(temp_setpoint_value) = id(pending_setpoint);
+            id(setpoint_being_adjusted) = false;
+            auto call = id(grill_climate).make_call();
+            call.set_target_temperature(id(temp_setpoint_value));
+            call.perform();
+            ESP_LOGI("setpoint", "Temperature setpoint auto-confirmed: %.0f°F", id(temp_setpoint_value));
+          }
+
+  - id: sos_beep
+    mode: queued
+    then:
+      # Three short beeps
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+      - delay: 400ms
+      # Three long beeps
+      - switch.turn_on: buzzer
+      - delay: 600ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 600ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 600ms
+      - switch.turn_off: buzzer
+      - delay: 400ms
+      # Three short beeps
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+      - delay: 200ms
+      - switch.turn_on: buzzer
+      - delay: 200ms
+      - switch.turn_off: buzzer
+
+  - id: alarm_beep
+    mode: restart
+    then:
+      - while:
+          condition:
+            lambda: 'return id(buzzer_enabled) && !id(alarm_silenced);'
+          then:
+            - script.execute: sos_beep
+            - delay: 3s
+
+  - id: autotune_script
+    then:
+      - if:
+          condition:
+            switch.is_on: arm_autotune
+          then:
+            - logger.log: "Autotune armed. Starting PID autotune."
+            - climate.pid.autotune:
+                id: grill_climate
+                noiseband: 1.0
+                positive_output: 100%
+                negative_output: 0%
+            - switch.turn_off: arm_autotune
+          else:
+            - logger.log: "Autotune not armed. Please arm before executing."
+
+# -------------------------------------------------------
+# Fan PWM Output & Control
 # -------------------------------------------------------
 output:
   - platform: ledc
@@ -118,12 +355,195 @@ fan:
     output: fan_pwm
     name: "Blower Fan"
     id: blower
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 5
 
 # -------------------------------------------------------
-# Buzzer
+# PID Climate Control
+# -------------------------------------------------------
+climate:
+  - platform: pid
+    id: grill_climate
+    name: "Temperature Setpoint"
+    sensor: pit_temp
+    default_target_temperature: 225°F
+    heat_output: fan_pwm
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 2
+
+    control_parameters:
+      kp: 0.3
+      ki: 0.005
+      kd: 0.8
+      output_averaging_samples: 5
+      derivative_averaging_samples: 5
+
+    deadband_parameters:
+      threshold_high: 2°F
+      threshold_low: -2°F
+      kp_multiplier: 0.0
+      ki_multiplier: 0.0
+      kd_multiplier: 0.0
+
+    visual:
+      min_temperature: 175°F
+      max_temperature: 750°F
+      temperature_step: 5°F
+
+# -------------------------------------------------------
+# Switches
 # -------------------------------------------------------
 switch:
   - platform: gpio
     pin: GPIO4
     id: buzzer
-    name: "Buzzer"
+    internal: true
+
+  - platform: template
+    name: "Buzzer Active"
+    id: buzzer_switch
+    internal: true
+    optimistic: true
+
+  - platform: template
+    name: "Buzzer Enabled"
+    id: buzzer_enable_switch
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - lambda: 'id(buzzer_enabled) = true;'
+    on_turn_off:
+      - lambda: |-
+          id(buzzer_enabled) = false;
+          id(buzzer_switch).turn_off();
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 4
+
+  # Fan Error switch (changed from binary_sensor)
+  - platform: template
+    name: "Fan Error"
+    id: fan_error_active
+    optimistic: true
+    web_server:
+      sorting_group_id: diagnostics_group
+      sorting_weight: 6
+
+  # High Temperature Alarm switch (changed from binary_sensor)
+  - platform: template
+    name: "High Temp Alarm"
+    id: high_temp_alarm_active
+    optimistic: true
+    web_server:
+      sorting_group_id: diagnostics_group
+      sorting_weight: 7
+
+  # Low Temperature Alarm switch (changed from binary_sensor)
+  - platform: template
+    name: "Low Temp Alarm"
+    id: low_temp_alarm_active
+    optimistic: true
+    web_server:
+      sorting_group_id: diagnostics_group
+      sorting_weight: 8
+
+  - platform: template
+    name: "Arm PID Autotune"
+    id: arm_autotune
+    optimistic: true
+    on_turn_on:
+      - delay: 15s
+      - switch.turn_off: arm_autotune
+    web_server:
+      sorting_group_id: pid_autotune_group
+      sorting_weight: 1
+
+# -------------------------------------------------------
+# Buttons
+# -------------------------------------------------------
+button:
+  - platform: template
+    name: "Execute PID Autotune"
+    on_press:
+      - script.execute: autotune_script
+    web_server:
+      sorting_group_id: pid_autotune_group
+      sorting_weight: 2
+
+  - platform: template
+    name: "Silence Alarm"
+    on_press:
+      - lambda: |-
+          id(alarm_silenced) = true;
+          id(buzzer_switch).turn_off();
+          ESP_LOGI("buzzer", "Alarm silenced via button");
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 3
+
+# -------------------------------------------------------
+# Alarm Monitoring Intervals
+# -------------------------------------------------------
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          static uint32_t high_temp_start = 0;
+          static uint32_t low_temp_start = 0;
+          
+          float current_temp = id(pit_temp).state;
+          float setpoint = id(temp_setpoint_value);
+          uint32_t now = millis();
+          
+          // High temperature alarm
+          if (current_temp > setpoint + 50.0) {
+            if (high_temp_start == 0) high_temp_start = now;
+            else if (now - high_temp_start > 180000 && !id(high_temp_alarm_active).state) {
+              id(high_temp_alarm_active).turn_on();
+              id(alarm_silenced) = false;
+              id(buzzer_switch).turn_on();
+              id(alarm_beep).execute();
+              ESP_LOGW("alarm", "HIGH TEMP ALARM: %.0f°F (setpoint: %.0f°F)", current_temp, setpoint);
+            }
+          } else {
+            high_temp_start = 0;
+            if (id(high_temp_alarm_active).state && current_temp <= setpoint + 25.0)
+              id(high_temp_alarm_active).turn_off();
+          }
+          
+          // Low temperature alarm
+          if (current_temp < setpoint - 50.0) {
+            if (low_temp_start == 0) low_temp_start = now;
+            else if (now - low_temp_start > 180000 && !id(low_temp_alarm_active).state) {
+              id(low_temp_alarm_active).turn_on();
+              id(alarm_silenced) = false;
+              id(buzzer_switch).turn_on();
+              id(alarm_beep).execute();
+              ESP_LOGW("alarm", "LOW TEMP ALARM: %.0f°F (setpoint: %.0f°F)", current_temp, setpoint);
+            }
+          } else {
+            low_temp_start = 0;
+            if (id(low_temp_alarm_active).state && current_temp >= setpoint - 25.0)
+              id(low_temp_alarm_active).turn_off();
+          }
+
+  - interval: 5s
+    then:
+      - lambda: |-
+          id(current_fan_duty) = id(blower).state;
+          bool fan_should_run = (id(grill_climate).mode == CLIMATE_MODE_HEAT) && (id(current_fan_duty) > 0.10);
+          
+          if (fan_should_run && id(fan_current).state < 0.1) {
+            if (!id(fan_error_active).state) {
+              id(fan_error_active).turn_on();
+              id(alarm_silenced) = false;
+              id(buzzer_switch).turn_on();
+              id(alarm_beep).execute();
+              ESP_LOGW("alarm", "FAN ERROR DETECTED! Current is too low.");
+            }
+          } else if (id(fan_current).state >= 0.1 && id(fan_error_active).state) {
+            id(fan_error_active).turn_off();
+            ESP_LOGI("alarm", "Fan error cleared.");
+          }

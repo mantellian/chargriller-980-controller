@@ -1,7 +1,10 @@
 esphome:
   name: chargriller-980
-  platform: ESP32
+
+esp32:
   board: esp32dev
+  framework:
+    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
@@ -21,46 +24,106 @@ api:
     key: !secret api_encryption_key
 
 ota:
+  platform: esphome
   password: !secret ota_password
 
 web_server:
   port: 80
 
+# -------------------------------------------------------
+# SPI – MAX31855 Thermocouple Amplifier
+# -------------------------------------------------------
 spi:
   clk_pin: GPIO18
   miso_pin: GPIO19
 
-globals:
-  - id: door_override
-    type: bool
-    restore_value: no
-    initial_value: 'false'
-  - id: error_code
-    type: std::string
-    restore_value: no
-    initial_value: '""'
-  - id: display_mode
-    type: int
-    restore_value: no
-    initial_value: '0'  # 0=normal, 1=error, 2=menu
-
-max31855:
+sensor:
+  # MAX31855 thermocouple
   - platform: max31855
-    name: "Smoker Temperature"
-    id: smoker_temp
+    name: "Pit Temperature"
     cs_pin: GPIO21
     update_interval: 1s
-    filters:
-      - sliding_window_moving_average:
-          window_size: 5
-          send_every: 1
+    id: pit_temp
 
-sensor:
+  # Fan Tachometer
   - platform: pulse_counter
-    pin: 
-      number: GPIO17
-      mode: INPUT_PULLUP
+    pin: GPIO17
     name: "Fan RPM"
+    unit_of_measurement: "RPM"
+    update_interval: 1s
     id: fan_rpm
-    unit_of_measurement: 'RPM'
-    fil
+
+  # Rotary Encoder
+  - platform: rotary_encoder
+    name: "Temp Setpoint"
+    id: temp_setpoint
+    pin_a: GPIO32
+    pin_b: GPIO33
+    min_value: 0
+    max_value: 450
+    resolution: 1
+
+# -------------------------------------------------------
+# TM1637 Displays
+# -------------------------------------------------------
+display:
+  - platform: tm1637
+    id: tm1637_current
+    clk_pin: GPIO23
+    dio_pin: GPIO26
+    update_interval: 0.5s
+
+  - platform: tm1637
+    id: tm1637_setpoint
+    clk_pin: GPIO5
+    dio_pin: GPIO22
+    update_interval: 0.5s
+
+# -------------------------------------------------------
+# Door Switch & Encoder Button
+# -------------------------------------------------------
+binary_sensor:
+  # Door switch
+  - platform: gpio
+    pin:
+      number: GPIO13
+      mode: INPUT_PULLUP
+    id: lid_switch
+    name: "Lid Switch"
+    device_class: opening
+    filters:
+      - invert: {}
+
+  # Encoder push button
+  - platform: gpio
+    pin:
+      number: GPIO27
+      mode: INPUT_PULLUP
+    id: encoder_button
+    name: "Encoder Button"
+    filters:
+      - invert: {}
+
+# -------------------------------------------------------
+# Fan PWM Output
+# -------------------------------------------------------
+output:
+  - platform: ledc
+    pin: GPIO16
+    frequency: 25000 Hz
+    id: fan_pwm
+
+fan:
+  - platform: speed
+    output: fan_pwm
+    name: "Blower Fan"
+    id: blower
+
+# -------------------------------------------------------
+# Buzzer
+# -------------------------------------------------------
+switch:
+  - platform: gpio
+    pin: GPIO4
+    id: buzzer
+    name: "Buzzer"

@@ -124,9 +124,7 @@ sensor:
     current:
       name: "Fan Current"
       id: fan_current
-      web_server:
-        sorting_group_id: diagnostics_group
-        sorting_weight: 10
+      internal: true
     update_interval: 5s
 
   # Rotary Encoder
@@ -151,8 +149,8 @@ sensor:
         - script.execute: setpoint_timeout
 
 # -------------------------------------------------------
-# Text Sensors - REMOVED (causing linker issues)
-# Use the actual sensors and switches directly in the web interface
+# Text Sensors - Removed due to linker issues
+# Individual alarm switches will show status instead
 # -------------------------------------------------------
 
 # -------------------------------------------------------
@@ -211,8 +209,8 @@ binary_sensor:
       number: GPIO13
       mode: INPUT_PULLUP
     id: lid_switch
-    name: "Lid Switch"
-    device_class: opening
+    name: "Door Switch"
+    device_class: door
     on_press:
       then:
         - climate.control:
@@ -355,9 +353,7 @@ fan:
     output: fan_pwm
     name: "Blower Fan"
     id: blower
-    web_server:
-      sorting_group_id: main_controls_group
-      sorting_weight: 5
+    internal: true
 
 # -------------------------------------------------------
 # PID Climate Control
@@ -365,7 +361,7 @@ fan:
 climate:
   - platform: pid
     id: grill_climate
-    name: "Temperature Setpoint"
+    name: "Grill"
     sensor: pit_temp
     default_target_temperature: 225°F
     heat_output: fan_pwm
@@ -408,7 +404,7 @@ switch:
     optimistic: true
 
   - platform: template
-    name: "Buzzer Enabled"
+    name: "Alarm Enabled"
     id: buzzer_enable_switch
     optimistic: true
     restore_mode: RESTORE_DEFAULT_ON
@@ -427,27 +423,30 @@ switch:
     name: "Fan Error"
     id: fan_error_active
     optimistic: true
+    icon: "mdi:fan-alert"
     web_server:
       sorting_group_id: diagnostics_group
-      sorting_weight: 6
+      sorting_weight: 1
 
   # High Temperature Alarm switch (changed from binary_sensor)
   - platform: template
     name: "High Temp Alarm"
     id: high_temp_alarm_active
     optimistic: true
+    icon: "mdi:fire-alert"
     web_server:
       sorting_group_id: diagnostics_group
-      sorting_weight: 7
+      sorting_weight: 2
 
   # Low Temperature Alarm switch (changed from binary_sensor)
   - platform: template
     name: "Low Temp Alarm"
     id: low_temp_alarm_active
     optimistic: true
+    icon: "mdi:snowflake-alert"
     web_server:
       sorting_group_id: diagnostics_group
-      sorting_weight: 8
+      sorting_weight: 3
 
   - platform: template
     name: "Arm PID Autotune"

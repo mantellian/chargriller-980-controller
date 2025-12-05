@@ -314,10 +314,6 @@ output:
     pin: GPIO16
     frequency: 25000 Hz
     id: fan_pwm
-    on_turn_on:
-      - lambda: 'id(current_fan_duty) = 1.0;'
-    on_turn_off:
-      - lambda: 'id(current_fan_duty) = 0.0;'
 
 fan:
   - platform: speed

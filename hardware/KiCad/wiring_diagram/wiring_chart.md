@@ -1,0 +1,142 @@
+# CharGriller-980 Wiring Chart
+
+## Power Distribution
+| Component | Connection | Wire Color |
+|-----------|------------|------------|
+| ESP32 | 5V Power Supply | 🔴 Red (5V) |
+| ESP32 | Ground | ⚫ Black (GND) |
+| All Components | Common Ground | ⚫ Black (GND) |
+
+---
+
+## MAX31855 Thermocouple Amplifier (SPI)
+| ESP32 Pin | MAX31855 Pin | Wire Color | Function |
+|-----------|--------------|------------|----------|
+| GPIO18 | CLK | 🟡 Yellow | SPI Clock |
+| GPIO19 | DO (MISO) | 🟢 Green | SPI Data Out |
+| GPIO21 | CS | 🟠 Orange | Chip Select |
+| 3.3V | VCC | 🔴 Red | Power (3.3V) |
+| GND | GND | ⚫ Black | Ground |
+
+**Thermocouple Connection:**
+| MAX31855 | Thermocouple | Wire Color |
+|----------|--------------|------------|
+| T+ | Positive | 🔴 Red |
+| T- | Negative | 🔵 Blue |
+
+---
+
+## TM1637 Display #1 (Current Temperature)
+| ESP32 Pin | TM1637 Pin | Wire Color | Function |
+|-----------|------------|------------|----------|
+| GPIO23 | CLK | 🟤 Brown | Clock |
+| GPIO26 | DIO | 🟣 Purple | Data I/O |
+| 5V | VCC | 🔴 Red | Power (5V) |
+| GND | GND | ⚫ Black | Ground |
+
+---
+
+## TM1637 Display #2 (Setpoint Temperature)
+| ESP32 Pin | TM1637 Pin | Wire Color | Function |
+|-----------|------------|------------|----------|
+| GPIO25 | CLK | 🟤 Brown | Clock |
+| GPIO22 | DIO | 🟣 Purple | Data I/O |
+| 5V | VCC | 🔴 Red | Power (5V) |
+| GND | GND | ⚫ Black | Ground |
+
+---
+
+## Rotary Encoder (with Push Button)
+| ESP32 Pin | Encoder Pin | Wire Color | Function |
+|-----------|-------------|------------|----------|
+| GPIO32 | A / CLK | ⚪ White | Phase A |
+| GPIO33 | B / DT | 🔵 Gray | Phase B |
+| GPIO27 | SW (Button) | 🟢 Green | Push Button |
+| GND | GND (pin) | ⚫ Black | Common Ground |
+| 3.3V | + (if needed) | 🔴 Red | Power (some encoders) |
+
+**Note:** Most rotary encoders have internal pullups. If yours doesn't, the ESP32 INPUT_PULLUP mode handles it.
+
+---
+
+## Door/Lid Switch
+| ESP32 Pin | Switch Pin | Wire Color | Function |
+|-----------|------------|------------|----------|
+| GPIO13 | One side | 🟡 Yellow | Signal |
+| GND | Other side | ⚫ Black | Ground |
+
+**Switch Type:** Normally Open (NO) - closes when lid opens
+
+---
+
+## Blower Fan (PWM Control + Tachometer)
+| ESP32 Pin | Fan Connection | Wire Color | Function |
+|-----------|----------------|------------|----------|
+| GPIO16 | PWM Input | 🔵 Blue | PWM Speed Control |
+| GPIO17 | TACH Output | 🟢 Green | RPM Signal |
+| 12V+ | Fan Power + | 🔴 Red | 12V Power |
+| GND | Fan Power - | ⚫ Black | Ground |
+
+**Note:** Fan needs external 12V power supply. ESP32 only provides PWM signal (low current).
+
+---
+
+## Buzzer (Active Buzzer)
+| ESP32 Pin | Buzzer Pin | Wire Color | Function |
+|-----------|------------|------------|----------|
+| GPIO4 | Positive (+) | 🟣 Purple | Signal |
+| GND | Negative (-) | ⚫ Black | Ground |
+
+**Note:** Use an active buzzer (has internal oscillator). If using a passive buzzer, you may need a transistor driver.
+
+---
+
+## Power Supply Requirements
+
+### Main Power Supply
+- **12V DC** (for blower fan)
+- **5V DC** (for ESP32 via USB or buck converter from 12V)
+- Recommended: 12V power supply with buck converter to 5V
+
+### Voltage Levels by Component
+| Component | Voltage | Current Draw |
+|-----------|---------|--------------|
+| ESP32 | 5V | ~500mA |
+| MAX31855 | 3.3V | ~2mA (from ESP32) |
+| TM1637 Displays (x2) | 5V | ~100mA each |
+| Rotary Encoder | 3.3V-5V | ~1mA |
+| Buzzer | 5V | ~30mA |
+| Blower Fan | 12V | 1-3A (depends on fan) |
+
+**Total 5V requirement:** ~800mA (without fan)  
+**Total 12V requirement:** 1-3A (fan only)
+
+---
+
+## Wiring Tips
+
+1. **Use a common ground** - Connect all GND connections together (star ground recommended)
+2. **Keep SPI wires short** - MAX31855 is sensitive to noise
+3. **Separate high-current wires** - Keep 12V fan wires away from signal wires
+4. **Twist thermocouple wires** - Reduces electromagnetic interference
+5. **Use ferrules on stranded wire** - Better connection in screw terminals
+6. **Label all wires** - Makes troubleshooting easier
+7. **Add pull-down resistor on fan PWM if needed** - Some fans need 10kΩ to GND on PWM line
+
+---
+
+## Quick Reference - ESP32 Pin Summary
+
+| GPIO | Component | Color | Function |
+|------|-----------|-------|----------|
+| 4 | Buzzer | 🟣 Purple | Buzzer Signal |
+| 13 | Door Switch | 🟡 Yellow | Lid Sensor |
+| 16 | Fan PWM | 🔵 Blue | Fan Speed |
+| 17 | Fan Tach | 🟢 Green | Fan RPM |
+| 18 | MAX31855 CLK | 🟡 Yellow | SPI Clock |
+| 19 | MAX31855 MISO | 🟢 Green | SPI Data |
+| 21 | MAX31855 CS | 🟠 Orange | Chip Select |
+| 22 | Display2 DIO | 🟣 Purple | Setpoint Data |
+| 23 | Display1 CLK | 🟤 Brown | Current Temp Clock |
+| 25 | Display2 CLK | 🟤 Brown | Setpoint Clock |
+| 26 | Display1 

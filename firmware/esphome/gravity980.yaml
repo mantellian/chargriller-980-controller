@@ -7,6 +7,9 @@ esphome:
           id(temp_setpoint_value) = 225.0;
           id(pending_setpoint) = 225.0;
           id(setpoint_being_adjusted) = false;
+          id(pid_enabled) = false;
+          id(integral) = 0.0;
+          id(previous_error) = 0.0;
 
 esp32:
   board: esp32dev
@@ -46,8 +49,8 @@ web_server:
     - id: diagnostics_group
       name: "Diagnostics"
       sorting_weight: 2
-    - id: pid_autotune_group
-      name: "PID Autotune"
+    - id: pid_settings_group
+      name: "PID Settings"
       sorting_weight: 3
 
 # -------------------------------------------------------
@@ -78,6 +81,58 @@ globals:
     type: float
     restore_value: no
     initial_value: '0.0'
+  - id: pid_enabled
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: integral
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: previous_error
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: kp
+    type: float
+    restore_value: yes
+    initial_value: '0.3'
+  - id: ki
+    type: float
+    restore_value: yes
+    initial_value: '0.005'
+  - id: kd
+    type: float
+    restore_value: yes
+    initial_value: '0.8'
+  - id: autotune_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: autotune_output_high
+    type: float
+    restore_value: no
+    initial_value: '0.8'
+  - id: autotune_peak_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: autotune_last_peak
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: autotune_peak_high
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: autotune_peak_low
+    type: float
+    restore_value: no
+    initial_value: '999.0'
+  - id: autotune_cycle_start
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
 
 # -------------------------------------------------------
 # I2C Bus
@@ -95,28 +150,31 @@ spi:
   miso_pin: GPIO19
 
 sensor:
-  # MAX31855 thermocouple
+  # MAX31855 thermocouple - Output in Fahrenheit
   - platform: max31855
-    name: "Pit Temperature"
+    name: "Current Temperature"
     cs_pin: GPIO14
     update_interval: 1s
     id: pit_temp
     filters:
-      - lambda: return (x * 1.8) + 32;
       - sliding_window_moving_average:
           window_size: 3
           send_every: 1
+      - multiply: 1.8
+      - offset: 32.0
     unit_of_measurement: "°F"
+    accuracy_decimals: 0
     on_value:
       then:
         - lambda: |-
             if (x >= 800.0) {
-              id(grill_climate).mode = CLIMATE_MODE_OFF;
+              id(pid_enabled) = false;
+              id(power_switch).turn_off();
               ESP_LOGW("safety", "EMERGENCY: Temperature exceeded 800°F! Shutting down.");
             }
     web_server:
       sorting_group_id: main_controls_group
-      sorting_weight: 0
+      sorting_weight: 1
 
   # INA219 Fan Current Sensor
   - platform: ina219
@@ -149,11 +207,6 @@ sensor:
         - script.execute: setpoint_timeout
 
 # -------------------------------------------------------
-# Text Sensors - Removed due to linker issues
-# Individual alarm switches will show status instead
-# -------------------------------------------------------
-
-# -------------------------------------------------------
 # TM1637 Displays
 # -------------------------------------------------------
 display:
@@ -164,35 +217,39 @@ display:
     dio_pin: GPIO26
     update_interval: 0.5s
     lambda: |-
-      if (id(fan_error_active).state) {
-        it.print("Err");
+      if (!id(pid_enabled)) {
+        it.print(" OFF");
+      } else if (id(fan_error_active).state) {
+        it.print(" Err");
       } else if (id(lid_switch).state) {
-        it.print("d00r");
+        it.print("oPEn");
       } else if (id(high_temp_alarm_active).state) {
-        it.print(" Hl");
+        it.print("  HI");
       } else if (id(low_temp_alarm_active).state) {
-        it.print(" L0");
+        it.print("  Lo");
       } else if (!isnan(id(pit_temp).state)) {
         it.printf("%.0f", id(pit_temp).state);
       } else {
-        it.print("---");
+        it.print(" ---");
       }
 
-  # Setpoint display
+  # Setpoint or error display
   - platform: tm1637
     id: tm1637_setpoint
     clk_pin: GPIO25
     dio_pin: GPIO22
     update_interval: 0.5s
     lambda: |-
-      if (id(fan_error_active).state) {
-        it.print("FAn");
+      if (!id(pid_enabled)) {
+        it.print(" OFF");
+      } else if (id(fan_error_active).state) {
+        it.print(" FAn");
       } else if (id(lid_switch).state) {
-        it.print("0PEn");
+        it.print("door");
       } else if (id(high_temp_alarm_active).state) {
-        it.print("rEnP");
+        it.print("tEmP");
       } else if (id(low_temp_alarm_active).state) {
-        it.print("rEnP");
+        it.print("tEmP");
       } else if (id(setpoint_being_adjusted)) {
         it.printf("%.0f", id(pending_setpoint));
       } else {
@@ -213,14 +270,10 @@ binary_sensor:
     device_class: door
     on_press:
       then:
-        - climate.control:
-            id: grill_climate
-            mode: "OFF"
+        - switch.turn_off: power_switch
     on_release:
       then:
-        - climate.control:
-            id: grill_climate
-            mode: "HEAT"
+        - switch.turn_on: power_switch
     web_server:
       sorting_group_id: diagnostics_group
       sorting_weight: 11
@@ -247,9 +300,6 @@ binary_sensor:
             } else if (id(setpoint_being_adjusted)) {
               id(temp_setpoint_value) = id(pending_setpoint);
               id(setpoint_being_adjusted) = false;
-              auto call = id(grill_climate).make_call();
-              call.set_target_temperature(id(temp_setpoint_value));
-              call.perform();
               ESP_LOGI("setpoint", "Temperature setpoint confirmed: %.0f°F", id(temp_setpoint_value));
             }
 
@@ -265,16 +315,12 @@ script:
           if (id(setpoint_being_adjusted)) {
             id(temp_setpoint_value) = id(pending_setpoint);
             id(setpoint_being_adjusted) = false;
-            auto call = id(grill_climate).make_call();
-            call.set_target_temperature(id(temp_setpoint_value));
-            call.perform();
             ESP_LOGI("setpoint", "Temperature setpoint auto-confirmed: %.0f°F", id(temp_setpoint_value));
           }
 
   - id: sos_beep
     mode: queued
     then:
-      # Three short beeps
       - switch.turn_on: buzzer
       - delay: 200ms
       - switch.turn_off: buzzer
@@ -287,7 +333,6 @@ script:
       - delay: 200ms
       - switch.turn_off: buzzer
       - delay: 400ms
-      # Three long beeps
       - switch.turn_on: buzzer
       - delay: 600ms
       - switch.turn_off: buzzer
@@ -300,7 +345,6 @@ script:
       - delay: 600ms
       - switch.turn_off: buzzer
       - delay: 400ms
-      # Three short beeps
       - switch.turn_on: buzzer
       - delay: 200ms
       - switch.turn_off: buzzer
@@ -323,24 +367,8 @@ script:
             - script.execute: sos_beep
             - delay: 3s
 
-  - id: autotune_script
-    then:
-      - if:
-          condition:
-            switch.is_on: arm_autotune
-          then:
-            - logger.log: "Autotune armed. Starting PID autotune."
-            - climate.pid.autotune:
-                id: grill_climate
-                noiseband: 1.0
-                positive_output: 100%
-                negative_output: 0%
-            - switch.turn_off: arm_autotune
-          else:
-            - logger.log: "Autotune not armed. Please arm before executing."
-
 # -------------------------------------------------------
-# Fan PWM Output & Control
+# Fan PWM Output
 # -------------------------------------------------------
 output:
   - platform: ledc
@@ -348,50 +376,33 @@ output:
     frequency: 25000 Hz
     id: fan_pwm
 
-fan:
-  - platform: speed
-    output: fan_pwm
-    name: "Blower Fan"
-    id: blower
-    internal: true
-
-# -------------------------------------------------------
-# PID Climate Control
-# -------------------------------------------------------
-climate:
-  - platform: pid
-    id: grill_climate
-    name: "Grill"
-    sensor: pit_temp
-    default_target_temperature: 225°F
-    heat_output: fan_pwm
-    web_server:
-      sorting_group_id: main_controls_group
-      sorting_weight: 2
-
-    control_parameters:
-      kp: 0.3
-      ki: 0.005
-      kd: 0.8
-      output_averaging_samples: 5
-      derivative_averaging_samples: 5
-
-    deadband_parameters:
-      threshold_high: 2°F
-      threshold_low: -2°F
-      kp_multiplier: 0.0
-      ki_multiplier: 0.0
-      kd_multiplier: 0.0
-
-    visual:
-      min_temperature: 175°F
-      max_temperature: 750°F
-      temperature_step: 5°F
-
 # -------------------------------------------------------
 # Switches
 # -------------------------------------------------------
 switch:
+  - platform: template
+    name: "Power"
+    id: power_switch
+    icon: "mdi:power"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - lambda: |-
+          id(pid_enabled) = true;
+          id(integral) = 0.0;
+          id(previous_error) = 0.0;
+          ESP_LOGI("power", "Grill powered ON");
+    turn_off_action:
+      - lambda: |-
+          id(pid_enabled) = false;
+          id(integral) = 0.0;
+          id(previous_error) = 0.0;
+          id(fan_pwm).set_level(0.0);
+          ESP_LOGI("power", "Grill powered OFF");
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 3
+
   - platform: gpio
     pin: GPIO4
     id: buzzer
@@ -416,61 +427,42 @@ switch:
           id(buzzer_switch).turn_off();
     web_server:
       sorting_group_id: main_controls_group
-      sorting_weight: 4
+      sorting_weight: 5
 
-  # Fan Error switch (changed from binary_sensor)
   - platform: template
     name: "Fan Error"
     id: fan_error_active
     optimistic: true
     icon: "mdi:fan-alert"
+    entity_category: diagnostic
     web_server:
       sorting_group_id: diagnostics_group
       sorting_weight: 1
 
-  # High Temperature Alarm switch (changed from binary_sensor)
   - platform: template
     name: "High Temp Alarm"
     id: high_temp_alarm_active
     optimistic: true
     icon: "mdi:fire-alert"
+    entity_category: diagnostic
     web_server:
       sorting_group_id: diagnostics_group
       sorting_weight: 2
 
-  # Low Temperature Alarm switch (changed from binary_sensor)
   - platform: template
     name: "Low Temp Alarm"
     id: low_temp_alarm_active
     optimistic: true
     icon: "mdi:snowflake-alert"
+    entity_category: diagnostic
     web_server:
       sorting_group_id: diagnostics_group
       sorting_weight: 3
-
-  - platform: template
-    name: "Arm PID Autotune"
-    id: arm_autotune
-    optimistic: true
-    on_turn_on:
-      - delay: 15s
-      - switch.turn_off: arm_autotune
-    web_server:
-      sorting_group_id: pid_autotune_group
-      sorting_weight: 1
 
 # -------------------------------------------------------
 # Buttons
 # -------------------------------------------------------
 button:
-  - platform: template
-    name: "Execute PID Autotune"
-    on_press:
-      - script.execute: autotune_script
-    web_server:
-      sorting_group_id: pid_autotune_group
-      sorting_weight: 2
-
   - platform: template
     name: "Silence Alarm"
     on_press:
@@ -480,23 +472,252 @@ button:
           ESP_LOGI("buzzer", "Alarm silenced via button");
     web_server:
       sorting_group_id: main_controls_group
+      sorting_weight: 4
+
+  - platform: template
+    name: "Start PID Autotune"
+    on_press:
+      - lambda: |-
+          if (!id(pid_enabled)) {
+            ESP_LOGW("autotune", "Cannot start autotune: Grill is OFF");
+            return;
+          }
+          if (id(autotune_active)) {
+            ESP_LOGW("autotune", "Autotune already running");
+            return;
+          }
+          
+          ESP_LOGI("autotune", "Starting PID autotune...");
+          id(autotune_active) = true;
+          id(autotune_peak_count) = 0;
+          id(autotune_peak_high) = 0.0;
+          id(autotune_peak_low) = 999.0;
+          id(autotune_cycle_start) = millis();
+          id(integral) = 0.0;
+          id(previous_error) = 0.0;
+    web_server:
+      sorting_group_id: pid_settings_group
+      sorting_weight: 4
+
+  - platform: template
+    name: "Stop PID Autotune"
+    on_press:
+      - lambda: |-
+          if (id(autotune_active)) {
+            ESP_LOGI("autotune", "Autotune stopped manually");
+            id(autotune_active) = false;
+          }
+    web_server:
+      sorting_group_id: pid_settings_group
+      sorting_weight: 5
+
+# -------------------------------------------------------
+# Number inputs for Setpoint and PID tuning
+# -------------------------------------------------------
+number:
+  - platform: template
+    name: "Target Temperature"
+    id: target_temp_number
+    min_value: 175
+    max_value: 750
+    step: 5
+    initial_value: 225
+    optimistic: true
+    unit_of_measurement: "°F"
+    icon: "mdi:thermometer"
+    mode: slider
+    on_value:
+      - lambda: |-
+          id(temp_setpoint_value) = x;
+          ESP_LOGI("setpoint", "Target temperature set to: %.0f°F", x);
+    web_server:
+      sorting_group_id: main_controls_group
+      sorting_weight: 2
+
+  - platform: template
+    name: "PID Kp"
+    id: kp_number
+    min_value: 0
+    max_value: 10
+    step: 0.1
+    initial_value: 0.3
+    optimistic: true
+    mode: box
+    on_value:
+      - lambda: 'id(kp) = x;'
+    web_server:
+      sorting_group_id: pid_settings_group
+      sorting_weight: 1
+
+  - platform: template
+    name: "PID Ki"
+    id: ki_number
+    min_value: 0
+    max_value: 1
+    step: 0.001
+    initial_value: 0.005
+    optimistic: true
+    mode: box
+    on_value:
+      - lambda: 'id(ki) = x;'
+    web_server:
+      sorting_group_id: pid_settings_group
+      sorting_weight: 2
+
+  - platform: template
+    name: "PID Kd"
+    id: kd_number
+    min_value: 0
+    max_value: 10
+    step: 0.1
+    initial_value: 0.8
+    optimistic: true
+    mode: box
+    on_value:
+      - lambda: 'id(kd) = x;'
+    web_server:
+      sorting_group_id: pid_settings_group
       sorting_weight: 3
 
 # -------------------------------------------------------
-# Alarm Monitoring Intervals
+# PID Control Loop
 # -------------------------------------------------------
 interval:
+  # PID calculation every second
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (!id(pid_enabled) || isnan(id(pit_temp).state)) {
+            id(fan_pwm).set_level(0.0);
+            return;
+          }
+          
+          float current_temp = id(pit_temp).state;
+          float setpoint = id(temp_setpoint_value);
+          
+          // Autotune mode - relay method
+          if (id(autotune_active)) {
+            static bool relay_state = false;
+            static float last_temp = 0.0;
+            static bool rising = true;
+            
+            // Relay control: turn on if below setpoint, off if above
+            if (current_temp < setpoint - 1.0) {
+              relay_state = true;
+              id(fan_pwm).set_level(id(autotune_output_high));
+            } else if (current_temp > setpoint + 1.0) {
+              relay_state = false;
+              id(fan_pwm).set_level(0.0);
+            }
+            
+            // Detect peaks
+            if (last_temp != 0.0) {
+              if (rising && current_temp < last_temp) {
+                // Found a peak (high point)
+                rising = false;
+                if (id(autotune_peak_count) > 0) {
+                  id(autotune_peak_high) = last_temp;
+                  ESP_LOGI("autotune", "Peak high: %.1f°F", last_temp);
+                }
+                id(autotune_peak_count)++;
+              } else if (!rising && current_temp > last_temp) {
+                // Found a valley (low point)
+                rising = true;
+                if (id(autotune_peak_count) > 0) {
+                  id(autotune_peak_low) = last_temp;
+                  ESP_LOGI("autotune", "Peak low: %.1f°F", last_temp);
+                }
+              }
+            }
+            last_temp = current_temp;
+            
+            // After 4 complete cycles, calculate PID values
+            if (id(autotune_peak_count) >= 8) {
+              uint32_t period_ms = millis() - id(autotune_cycle_start);
+              float period_sec = period_ms / 1000.0 / 4.0; // Average period
+              float amplitude = (id(autotune_peak_high) - id(autotune_peak_low)) / 2.0;
+              
+              // Ziegler-Nichols tuning rules
+              float ku = (4.0 * id(autotune_output_high)) / (3.14159 * amplitude);
+              float tu = period_sec;
+              
+              id(kp) = 0.6 * ku;
+              id(ki) = 1.2 * ku / tu;
+              id(kd) = 0.075 * ku * tu;
+              
+              ESP_LOGI("autotune", "Autotune complete!");
+              ESP_LOGI("autotune", "Ku=%.3f, Tu=%.1fs", ku, tu);
+              ESP_LOGI("autotune", "New PID values: Kp=%.3f, Ki=%.4f, Kd=%.3f", id(kp), id(ki), id(kd));
+              
+              // Update number entities
+              id(kp_number).publish_state(id(kp));
+              id(ki_number).publish_state(id(ki));
+              id(kd_number).publish_state(id(kd));
+              
+              id(autotune_active) = false;
+              id(integral) = 0.0;
+              id(previous_error) = 0.0;
+            }
+            
+            // Timeout after 30 minutes
+            if (millis() - id(autotune_cycle_start) > 1800000) {
+              ESP_LOGW("autotune", "Autotune timed out after 30 minutes");
+              id(autotune_active) = false;
+            }
+            
+            return;
+          }
+          
+          // Normal PID mode
+          float error = setpoint - current_temp;
+          
+          // Proportional
+          float p_term = id(kp) * error;
+          
+          // Integral with windup protection
+          id(integral) += error;
+          if (id(integral) > 100.0) id(integral) = 100.0;
+          if (id(integral) < -100.0) id(integral) = -100.0;
+          float i_term = id(ki) * id(integral);
+          
+          // Derivative
+          float d_term = id(kd) * (error - id(previous_error));
+          id(previous_error) = error;
+          
+          // Calculate output (0-100%)
+          float output = p_term + i_term + d_term;
+          
+          // Clamp output
+          if (output > 100.0) output = 100.0;
+          if (output < 0.0) output = 0.0;
+          
+          // Deadband: if within ±2°F of setpoint, reduce output
+          if (error > -2.0 && error < 2.0) {
+            output *= 0.5;
+          }
+          
+          // Set fan PWM
+          id(fan_pwm).set_level(output / 100.0);
+          id(current_fan_duty) = output / 100.0;
+
+  # Alarm monitoring
   - interval: 10s
     then:
       - lambda: |-
           static uint32_t high_temp_start = 0;
           static uint32_t low_temp_start = 0;
           
+          if (!id(pid_enabled)) {
+            high_temp_start = 0;
+            low_temp_start = 0;
+            return;
+          }
+          
           float current_temp = id(pit_temp).state;
           float setpoint = id(temp_setpoint_value);
           uint32_t now = millis();
           
-          // High temperature alarm
+          // High temperature alarm (50°F above setpoint)
           if (current_temp > setpoint + 50.0) {
             if (high_temp_start == 0) high_temp_start = now;
             else if (now - high_temp_start > 180000 && !id(high_temp_alarm_active).state) {
@@ -512,7 +733,7 @@ interval:
               id(high_temp_alarm_active).turn_off();
           }
           
-          // Low temperature alarm
+          // Low temperature alarm (50°F below setpoint)
           if (current_temp < setpoint - 50.0) {
             if (low_temp_start == 0) low_temp_start = now;
             else if (now - low_temp_start > 180000 && !id(low_temp_alarm_active).state) {
@@ -528,11 +749,13 @@ interval:
               id(low_temp_alarm_active).turn_off();
           }
 
+  # Fan error detection
   - interval: 5s
     then:
       - lambda: |-
-          id(current_fan_duty) = id(blower).state;
-          bool fan_should_run = (id(grill_climate).mode == CLIMATE_MODE_HEAT) && (id(current_fan_duty) > 0.10);
+          if (!id(pid_enabled)) return;
+          
+          bool fan_should_run = id(current_fan_duty) > 0.10;
           
           if (fan_should_run && id(fan_current).state < 0.1) {
             if (!id(fan_error_active).state) {

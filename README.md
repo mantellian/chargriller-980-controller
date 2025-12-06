@@ -127,6 +127,6 @@ Always follow proper electrical safety practices and local codes.
 ---
 
 **Maintainer**: [mantellian](https://github.com/mantellian)  
-**Last Updated**: November 2025
+
 
 ...

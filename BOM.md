@@ -87,6 +87,6 @@ These parts are reused from your existing CharGriller 980:
 
 ---
 
-**Last Updated**: November 2025  
+  
 **License**: MIT (see LICENSE file)  
 **Maintainer**: mantellian

@@ -60,7 +60,7 @@ This project is my solution: an ESP32-based controller with PID control, web int
 
 **See [BOM.md](BOM.md) for complete parts list with specs and sourcing.**
 
-**See [WIRING.md](WIRING.md) for detailed wiring diagrams and connections.**
+**See [wiring_chart.md](hardware/KiCad/wiring_diagram/wiring_chart.md) for detailed wiring diagrams and connections.**
 
 ---
 
@@ -451,5 +451,5 @@ This project involves:
 
 **Maintainer**: [mantellian](https://github.com/mantellian)  
 **Project Status**: Alpha/Testing - Use at your own risk  
-**Last Updated**: December 2025  
+  
 

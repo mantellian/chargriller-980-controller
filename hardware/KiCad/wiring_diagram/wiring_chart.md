@@ -1,163 +1,397 @@
 # CharGriller-980 Wiring Chart
 
+**IMPORTANT: Read completely before wiring. Double-check all connections before applying power.**
+
+---
+
 ## Power Distribution
-| Component | Connection | Wire Color |
-|-----------|------------|------------|
-| ESP32 | 5V Power Supply | 🔴 Red (5V) |
-| ESP32 | Ground | ⚫ Black (GND) |
-| All Components | Common Ground | ⚫ Black (GND) |
+
+### 12V Power Supply Connections
+| From | To | Wire Gauge | Notes |
+|------|-----|------------|-------|
+| 12V PSU + | Buck Converter VIN+ | 18 AWG 🔴 Red | Main 12V input |
+| 12V PSU + | INA219 VIN+ | 18 AWG 🔴 Red | High-side current sensing |
+| 12V PSU - | Common GND (Star Point) | 18 AWG ⚫ Black | See grounding section |
+
+### 5V Power Rail (from Buck Converter)
+| From | To | Wire Gauge | Notes |
+|------|-----|------------|-------|
+| Buck VOUT+ | ESP32 5V/VIN | 22 AWG 🔴 Red | Main controller power |
+| Buck VOUT+ | TM1637 Display #1 VCC | 22 AWG 🔴 Red | Current temp display |
+| Buck VOUT+ | TM1637 Display #2 VCC | 22 AWG 🔴 Red | Setpoint display |
+| Buck VOUT+ | Buzzer + | 22 AWG 🔴 Red | 5V active buzzer |
+| Buck VOUT- | Common GND (Star Point) | 22 AWG ⚫ Black | Return path |
+
+### 3.3V Power (from ESP32 onboard regulator)
+| From | To | Wire Gauge | Notes |
+|------|-----|------------|-------|
+| ESP32 3V3 | MAX31855 VCC | 22 AWG 🟠 Orange | Thermocouple amp power |
+| ESP32 3V3 | INA219 VCC | 22 AWG 🟠 Orange | Current sensor logic power |
+
+⚠️ **CRITICAL**: INA219 VCC must be 3.3V (not 5V) for stable operation with ESP32
 
 ---
 
-## I2C Bus
-| ESP32 Pin | Function | Wire Color |
-|-----------|----------|------------|
-| GPIO21    | SDA      | ⚪ White   |
-| GPIO17    | SCL      | 🔵 Blue    |
+## I2C Bus (INA219 Current Sensor)
+
+| ESP32 Pin | Signal | Connect To | Wire Color | Notes |
+|-----------|--------|------------|------------|-------|
+| GPIO21 | SDA | INA219 SDA | ⚪ White | I2C Data |
+| GPIO17 | SCL | INA219 SCL | 🔵 Blue | I2C Clock |
+
+**I2C Address**: 0x40 (default for INA219)
+
+**Pull-up Resistors**: Not required - ESP32 has internal pull-ups enabled in software
 
 ---
 
-## MAX31855 Thermocouple Amplifier (SPI)
-| ESP32 Pin | MAX31855 Pin | Wire Color | Function |
-|-----------|--------------|------------|----------|
-| GPIO18 | CLK | 🟡 Yellow | SPI Clock |
-| GPIO19 | DO (MISO) | 🟢 Green | SPI Data Out |
-| GPIO14 | CS | 🟠 Orange | Chip Select |
-| 3.3V | VCC | 🔴 Red | Power (3.3V) |
-| GND | GND | ⚫ Black | Ground |
+## SPI Bus (MAX31855 Thermocouple Amplifier)
 
-**Thermocouple Connection:**
-| MAX31855 | Thermocouple | Wire Color |
-|----------|--------------|------------|
-| T+ | Positive | 🔴 Red |
-| T- | Negative | 🔵 Blue |
+| ESP32 Pin | Signal | MAX31855 Pin | Wire Color | Notes |
+|-----------|--------|--------------|------------|-------|
+| GPIO18 | SCK | CLK | 🟡 Yellow | SPI Clock |
+| GPIO19 | MISO | DO (SO) | 🟢 Green | SPI Data Out |
+| GPIO14 | CS | CS | 🟠 Orange | Chip Select (active low) |
+| 3.3V | Power | VCC | 🟠 Orange | 3.3V power |
+| GND | Ground | GND | ⚫ Black | Ground |
 
----
+**Note**: MAX31855 is SPI read-only (no MOSI connection needed)
 
-## INA219 Current Sensor (I2C)
-| ESP32 Pin | INA219 Pin | Wire Color | Function |
-|-----------|------------|------------|----------|
-| GPIO21    | SDA        | ⚪ White   | I2C Data |
-| GPIO17    | SCL        | 🔵 Blue    | I2C Clock |
-| 3.3V / 5V | VCC        | 🔴 Red     | Power    |
-| GND       | GND        | ⚫ Black   | Ground   |
+### Thermocouple Connection
+| MAX31855 Terminal | Thermocouple Wire | Notes |
+|-------------------|-------------------|-------|
+| T+ / + | Positive (usually yellow) | Polarity matters! |
+| T- / - | Negative (usually red) | Reversed polarity gives negative temps |
+
+⚠️ **K-type thermocouple color codes vary by manufacturer - verify with multimeter**
 
 ---
 
-## TM1637 Display #1 (Current Temperature)
-| ESP32 Pin | TM1637 Pin | Wire Color | Function |
-|-----------|------------|------------|----------|
-| GPIO23 | CLK | 🟤 Brown | Clock |
-| GPIO26 | DIO | 🟣 Purple | Data I/O |
-| 5V | VCC | 🔴 Red | Power (5V) |
-| GND | GND | ⚫ Black | Ground |
+## TM1637 Display #1 (Current Temperature - Left)
+
+| ESP32 Pin | Signal | TM1637 Pin | Wire Color | Notes |
+|-----------|--------|------------|------------|-------|
+| GPIO23 | CLK | CLK | 🟤 Brown | Clock signal |
+| GPIO26 | DIO | DIO | 🟣 Purple | Data I/O (bidirectional) |
+| 5V | Power | VCC | 🔴 Red | 5V power |
+| GND | Ground | GND | ⚫ Black | Ground |
 
 ---
 
-## TM1637 Display #2 (Setpoint Temperature)
-| ESP32 Pin | TM1637 Pin | Wire Color | Function |
-|-----------|------------|------------|----------|
-| GPIO25 | CLK | 🟤 Brown | Clock |
-| GPIO22 | DIO | 🟣 Purple | Data I/O |
-| 5V | VCC | 🔴 Red | Power (5V) |
-| GND | GND | ⚫ Black | Ground |
+## TM1637 Display #2 (Setpoint - Right)
+
+| ESP32 Pin | Signal | TM1637 Pin | Wire Color | Notes |
+|-----------|--------|------------|------------|-------|
+| GPIO25 | CLK | CLK | 🟤 Brown | Clock signal |
+| GPIO22 | DIO | DIO | 🟣 Purple | Data I/O (bidirectional) |
+| 5V | Power | VCC | 🔴 Red | 5V power |
+| GND | Ground | GND | ⚫ Black | Ground |
+
+**TM1637 Notes:**
+- Some modules have 4 pins, others have 6 (ignore extra pins)
+- CLK and DIO can tolerate 5V signals even though ESP32 is 3.3V
+- Keep wires under 12 inches for reliable operation
 
 ---
 
-## Rotary Encoder (with Push Button)
-| ESP32 Pin | Encoder Pin | Wire Color | Function |
-|-----------|-------------|------------|----------|
-| GPIO32 | A / CLK | ⚪ White | Phase A |
-| GPIO33 | B / DT | 🔵 Gray | Phase B |
-| GPIO27 | SW (Button) | 🟢 Green | Push Button |
-| GND | GND (pin) | ⚫ Black | Common Ground |
-| 3.3V | + (if needed) | 🔴 Red | Power (some encoders) |
+## Rotary Encoder (KY-040)
 
-**Note:** Most rotary encoders have internal pullups. If yours doesn't, the ESP32 INPUT_PULLUP mode handles it.
+| ESP32 Pin | Signal | Encoder Pin | Wire Color | Notes |
+|-----------|--------|-------------|------------|-------|
+| GPIO32 | Phase A | CLK / A | ⚪ White | Encoder channel A |
+| GPIO33 | Phase B | DT / B | 🩶 Gray | Encoder channel B |
+| GPIO27 | Button | SW | 🟢 Green | Push button switch |
+| GND | Ground | GND / - | ⚫ Black | Common ground |
+| (not connected) | Power | + | (none) | KY-040 has internal pull-ups |
+
+**Encoder Module Notes:**
+- Most KY-040 modules have built-in pull-up resistors
+- ESP32 enables internal pull-ups in software for redundancy
+- If encoder is "jumpy" or misses steps, add 0.1µF capacitors between each signal pin and GND
 
 ---
 
 ## Door/Lid Switch
-| ESP32 Pin | Switch Pin | Wire Color | Function |
-|-----------|------------|------------|----------|
-| GPIO13 | One side | 🟡 Yellow | Signal |
-| GND | Other side | ⚫ Black | Ground |
 
-**Switch Type:** Normally Open (NO) - closes when lid opens
+| ESP32 Pin | Signal | Switch Terminal | Wire Color | Notes |
+|-----------|--------|-----------------|------------|-------|
+| GPIO13 | Input | Terminal 1 | 🟡 Yellow | Signal input |
+| GND | Ground | Terminal 2 | ⚫ Black | Ground |
 
----
+**Switch Type**: Normally Open (NO)
+- **Door closed**: Switch open → GPIO13 pulled HIGH (internal pull-up)
+- **Door open**: Switch closes → GPIO13 pulled LOW
 
-## Blower Fan (PWM Control)
-| ESP32 Pin | Fan Connection | Wire Color | Function |
-|-----------|----------------|------------|----------|
-| GPIO16 | PWM Input | 🔵 Blue | PWM Speed Control |
-| 12V+ | Fan Power + | 🔴 Red | 12V Power |
-| GND | Fan Power - | ⚫ Black | Ground |
-
-**Note:** Fan needs external 12V power supply. ESP32 only provides PWM signal (low current).
+⚠️ **Your OEM switch may be Normally Closed (NC) - verify with multimeter and adjust config if needed**
 
 ---
 
-## Buzzer (Active Buzzer)
-| ESP32 Pin | Buzzer Pin | Wire Color | Function |
-|-----------|------------|------------|----------|
-| GPIO4 | Positive (+) | 🟣 Purple | Signal |
-| GND | Negative (-) | ⚫ Black | Ground |
+## Fan Control Circuit
 
-**Note:** Use an active buzzer (has internal oscillator). If using a passive buzzer, you may need a transistor driver.
+### PWM Signal Path
+| ESP32 Pin | Connect To | Wire Color | Notes |
+|-----------|------------|------------|-------|
+| GPIO16 | 220Ω Resistor → MOSFET Gate | 🔵 Blue | PWM control signal |
+
+### Fan Power Path (High-Side Current Sensing)
+```
+12V+ → INA219 VIN+ → INA219 VIN- → MOSFET Drain → Fan Negative (Black)
+                                                       ↓
+                                                 MOSFET Source → GND
+                                                 
+Fan Positive (Red) → 12V+ (direct connection)
+```
+
+**Detailed Connections:**
+
+| From | To | Wire Gauge | Notes |
+|------|-----|------------|-------|
+| 12V PSU + | INA219 VIN+ | 18 AWG 🔴 Red | Current sensing input |
+| INA219 VIN- | MOSFET Drain | 18 AWG 🔴 Red | To switching element |
+| MOSFET Drain | Fan Negative Wire | 18 AWG ⚫ Black | PWM-switched ground |
+| MOSFET Source | Common GND | 18 AWG ⚫ Black | Return to ground |
+| Fan Positive Wire | 12V+ | 18 AWG 🔴 Red | Direct to power supply |
+| GPIO16 | 220Ω Resistor | 22 AWG 🔵 Blue | PWM signal |
+| 220Ω Resistor | MOSFET Gate | 22 AWG 🔵 Blue | Gate drive |
+| MOSFET Gate | 10kΩ Resistor → GND | (optional) | Pull-down for defined off-state |
+
+### Flyback Diode (Protection)
+| Component | Connection | Notes |
+|-----------|------------|-------|
+| 1N4007 Diode | Cathode (stripe) → 12V+ | Reverse voltage protection |
+| 1N4007 Diode | Anode → Fan Negative | Clamps inductive kickback |
+
+**MOSFET Module Notes:**
+- If using pre-made MOSFET module, gate resistor and flyback diode may be included
+- Verify module is "logic-level" (Vgs < 5V) - IRF520, IRLZ44N, or similar
+- Heat sink recommended if fan draws > 2A
+
+---
+
+## Buzzer (Active Piezo)
+
+| ESP32 Pin | Signal | Buzzer Terminal | Wire Color | Notes |
+|-----------|--------|-----------------|------------|-------|
+| GPIO4 | Control | + (Positive) | 🟣 Purple | Active-high control |
+| GND | Ground | - (Negative) | ⚫ Black | Ground |
+
+**Buzzer Type**: Must be **ACTIVE** buzzer (has internal oscillator)
+- 2-wire active buzzer (not 3-wire passive)
+- 5V rated, typically draws 20-30mA
+- If too quiet, consider adding transistor driver
+
+**Testing**: Connect to 5V directly - should produce continuous tone
+
+---
+
+## Grounding Architecture (CRITICAL)
+
+Use **star grounding** to minimize noise and ground loops:
+
+```
+                    ┌─────────────────┐
+                    │   12V PSU -     │
+                    │  (STAR POINT)   │
+                    └────────┬────────┘
+                             │
+           ┌─────────────────┼─────────────────┐
+           │                 │                 │
+           │                 │                 │
+      ESP32 GND         Buck GND          INA219 GND
+           │                 │                 │
+           │                 │            MOSFET Source
+           │                 │                 │
+      MAX31855 GND      TM1637 #1          Fan Ground
+           │                 │
+      Encoder GND       TM1637 #2
+           │                 │
+      Door Switch       Buzzer GND
+```
+
+**Grounding Rules:**
+1. All grounds eventually connect at **ONE** central point (star)
+2. No ground loops (no circular paths)
+3. Keep high-current ground (fan) as short as possible
+4. Run separate ground wires - don't daisy-chain
 
 ---
 
 ## Power Supply Requirements
 
-### Main Power Supply
-- **12V DC** (for blower fan)
-- **5V DC** (for ESP32 via USB or buck converter from 12V)
-- Recommended: 12V power supply with buck converter to 5V
+### Input Power
+| Parameter | Specification |
+|-----------|---------------|
+| Voltage | 12V DC (11.5-12.5V acceptable) |
+| Current | 5A recommended (3A minimum) |
+| Connector | 2.1mm barrel jack or screw terminals |
+| Type | Regulated switching power supply |
 
-### Voltage Levels by Component
-| Component | Voltage | Current Draw |
-|-----------|---------|--------------|
-| ESP32 | 5V | ~500mA |
-| MAX31855 | 3.3V | ~2mA (from ESP32) |
-| TM1637 Displays (x2) | 5V | ~100mA each |
-| Rotary Encoder | 3.3V-5V | ~1mA |
-| Buzzer | 5V | ~30mA |
-| Blower Fan | 12V | 1-3A (depends on fan) |
-
-**Total 5V requirement:** ~800mA (without fan)  
-**Total 12V requirement:** 1-3A (fan only)
-
----
-
-## Wiring Tips
-
-1. **Use a common ground** - Connect all GND connections together (star ground recommended)
-2. **Keep SPI wires short** - MAX31855 is sensitive to noise
-3. **Separate high-current wires** - Keep 12V fan wires away from signal wires
-4. **Twist thermocouple wires** - Reduces electromagnetic interference
-5. **Use ferrules on stranded wire** - Better connection in screw terminals
-6. **Label all wires** - Makes troubleshooting easier
-7. **Add pull-down resistor on fan PWM if needed** - Some fans need 10kΩ to GND on PWM line
+### Current Budget
+| Component | Voltage | Current Draw | Notes |
+|-----------|---------|--------------|-------|
+| ESP32 | 5V | 500mA | Peak during WiFi transmission |
+| TM1637 #1 | 5V | 100mA | At full brightness |
+| TM1637 #2 | 5V | 100mA | At full brightness |
+| Buzzer | 5V | 30mA | When active |
+| MAX31855 | 3.3V | 2mA | From ESP32 regulator |
+| INA219 | 3.3V | 1mA | From ESP32 regulator |
+| **5V Rail Total** | | **~730mA** | Use 2A buck converter for headroom |
+| **Fan (12V)** | 12V | 1-3A | Depends on fan model and duty cycle |
+| **Total System** | 12V input | **~4A peak** | 5A supply recommended |
 
 ---
 
-## Quick Reference - ESP32 Pin Summary
+## Wiring Best Practices
 
-| GPIO | Component | Function |
-|------|-----------|----------|
-| 4    | Buzzer    | Signal   |
-| 13   | Door Switch | Lid Sensor |
-| 14   | MAX31855  | CS       |
-| 16   | Fan PWM   | Fan Speed |
-| 17   | I2C       | SCL (for INA219) |
-| 18   | MAX31855  | CLK      |
-| 19   | MAX31855  | MISO     |
-| 21   | I2C       | SDA (for INA219) |
-| 22   | TM1637 (Set) | DIO (Setpoint Data) |
-| 23   | TM1637 (Cur) | CLK (Current Temp Clock) |
-| 25   | TM1637 (Set) | CLK (Setpoint Clock) |
-| 26   | TM1637 (Cur) | DIO (Current Temp Data) |
-| 27   | Encoder   | Button   |
-| 32   | Encoder   | Phase A  |
-| 33   | Encoder   | Phase B  | 
+### Wire Gauge Selection
+| Circuit | Recommended Gauge | Max Length |
+|---------|-------------------|------------|
+| 12V main power | 18 AWG | 6 feet |
+| 5V power distribution | 22 AWG | 3 feet |
+| 3.3V signals | 22-24 AWG | 2 feet |
+| Digital signals | 22-24 AWG | 1 foot |
+
+### Wire Management
+1. **Use ferrules on stranded wire** - Prevents fraying in screw terminals
+2. **Twist thermocouple wires together** - Reduces EMI pickup
+3. **Separate power and signal wires** - Avoid parallel runs > 6 inches
+4. **Keep SPI wires short** - MAX31855 is sensitive to capacitance
+5. **Label everything** - Use label maker or masking tape
+6. **Use heat shrink** - Cover all solder joints and connections
+7. **Strain relief** - Secure wires near connectors
+
+### Color Code Recommendations
+| Purpose | Color | Notes |
+|---------|-------|-------|
+| 12V positive | 🔴 Red | High voltage power |
+| 5V positive | 🔴 Red | Lower voltage power |
+| 3.3V positive | 🟠 Orange | Logic power |
+| Ground (any) | ⚫ Black | All returns |
+| I2C SDA | ⚪ White | Data signal |
+| I2C SCL | 🔵 Blue | Clock signal |
+| SPI Clock | 🟡 Yellow | Clock signal |
+| SPI Data | 🟢 Green | Data signal |
+| PWM/Control | 🔵 Blue or 🟣 Purple | Control signals |
+
+**Note**: These are suggestions - use what you have, but **document your actual colors**!
+
+---
+
+## Pre-Power Checklist
+
+Before applying power for the first time:
+
+### Visual Inspection
+- [ ] All solder joints shiny and solid (no cold joints)
+- [ ] No solder bridges between pads
+- [ ] No exposed wire strands near terminals
+- [ ] All ICs oriented correctly (check pin 1 markers)
+- [ ] Antenna connected to ESP32 U.FL connector
+- [ ] Heat sinks installed on buck converter and MOSFET (if needed)
+
+### Continuity Testing (Power OFF)
+- [ ] Verify ground continuity between all GND points
+- [ ] Verify NO continuity between 12V and GND
+- [ ] Verify NO continuity between 5V and GND
+- [ ] Verify NO continuity between 3.3V and GND
+- [ ] Check for shorts on all power rails
+
+### Voltage Testing (12V connected, ESP32 disconnected)
+- [ ] Measure 12V rail: 11.5-12.5V
+- [ ] Adjust buck converter to exactly 5.0V (±0.05V)
+- [ ] Verify no voltage on signal pins (except pull-ups)
+
+### First Power-On (12V + ESP32)
+- [ ] Power on and monitor for smoke/heat
+- [ ] Check ESP32 LED indicators (should blink)
+- [ ] Verify 5V rail remains stable
+- [ ] Check 3.3V output from ESP32
+- [ ] Feel components for excessive heat
+
+---
+
+## Troubleshooting Quick Reference
+
+| Symptom | Possible Cause | Check |
+|---------|----------------|-------|
+| ESP32 won't boot | Power issue | Verify 5V at VIN pin |
+| | GPIO strapping | Check GPIO12 is LOW at boot |
+| No WiFi | Antenna not connected | Verify U.FL connection |
+| Temperature shows -127°C | Thermocouple disconnected | Check T+ and T- terminals |
+| | Wrong polarity | Swap thermocouple wires |
+| Temperature unstable | EMI pickup | Twist thermocouple wires |
+| | Loose connection | Check screw terminals |
+| Display doesn't light | No power | Check 5V at VCC pin |
+| | Wrong wiring | Verify CLK/DIO connections |
+| Encoder doesn't work | Pull-ups needed | Enable INPUT_PULLUP in config |
+| | Bouncing | Add 0.1µF caps to pins |
+| Fan doesn't run | MOSFET not switching | Check gate voltage (should vary 0-3.3V) |
+| | No 12V | Verify 12V at fan positive |
+| | Bad MOSFET | Test with multimeter |
+| Fan runs always | MOSFET stuck on | Check for short gate-to-drain |
+| | Inverted logic | May need LOW-side switching |
+| INA219 not detected | Wrong I2C pins | Verify SDA=21, SCL=17 |
+| | Bad module | Try I2C scan in logs |
+| Buzzer doesn't work | Passive buzzer | Need active buzzer with oscillator |
+| | Wrong polarity | Swap +/- connections |
+
+---
+
+## ESP32 GPIO Pin Summary (Quick Reference)
+
+| GPIO | Function | Component | Direction | Notes |
+|------|----------|-----------|-----------|-------|
+| 4 | Output | Buzzer | OUT | Active-high control |
+| 13 | Input | Door Switch | IN | INPUT_PULLUP enabled |
+| 14 | SPI | MAX31855 CS | OUT | Chip select (active low) |
+| 16 | PWM | Fan Control | OUT | 25kHz PWM signal |
+| 17 | I2C | SCL (INA219) | OUT | Clock line |
+| 18 | SPI | MAX31855 CLK | OUT | SPI clock |
+| 19 | SPI | MAX31855 MISO | IN | SPI data in |
+| 21 | I2C | SDA (INA219) | I/O | Data line |
+| 22 | Output | TM1637 #2 DIO | I/O | Setpoint display data |
+| 23 | Output | TM1637 #1 CLK | OUT | Current temp clock |
+| 25 | Output | TM1637 #2 CLK | OUT | Setpoint clock |
+| 26 | Output | TM1637 #1 DIO | I/O | Current temp data |
+| 27 | Input | Encoder Button | IN | INPUT_PULLUP enabled |
+| 32 | Input | Encoder Phase A | IN | INPUT_PULLUP enabled |
+| 33 | Input | Encoder Phase B | IN | INPUT_PULLUP enabled |
+
+**Unused Pins Available for Expansion:**
+- GPIO 5, 12, 15, 34, 35, 36, 39 (input only)
+
+---
+
+## Advanced: Adding a Second Thermocouple (Meat Probe)
+
+To add meat temperature monitoring (future expansion):
+
+### Additional Hardware Needed
+- MAX31855 module (second unit)
+- K-type food-grade thermocouple probe
+- 3 additional wires
+
+### Wiring
+| ESP32 Pin | MAX31855 #2 |
+|-----------|-------------|
+| GPIO18 | CLK (shared) |
+| GPIO19 | MISO (shared) |
+| GPIO5 | CS (dedicated) |
+| 3.3V | VCC |
+| GND | GND |
+
+### ESPHome Config Addition
+```yaml
+sensor:
+  - platform: max31855
+    name: "Meat Temperature"
+    cs_pin: GPIO5  # Different CS pin
+    update_interval: 2s
+    # ... rest of config
+```
+
+---
+
+**Document Version**: 1.1  
+**Last Updated**: December 2024  
+**Matches Config**: chargriller-980.yaml v0.2

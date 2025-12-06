@@ -9,12 +9,20 @@
 
 ---
 
+## I2C Bus
+| ESP32 Pin | Function | Wire Color |
+|-----------|----------|------------|
+| GPIO21    | SDA      | ⚪ White   |
+| GPIO17    | SCL      | 🔵 Blue    |
+
+---
+
 ## MAX31855 Thermocouple Amplifier (SPI)
 | ESP32 Pin | MAX31855 Pin | Wire Color | Function |
 |-----------|--------------|------------|----------|
 | GPIO18 | CLK | 🟡 Yellow | SPI Clock |
 | GPIO19 | DO (MISO) | 🟢 Green | SPI Data Out |
-| GPIO21 | CS | 🟠 Orange | Chip Select |
+| GPIO14 | CS | 🟠 Orange | Chip Select |
 | 3.3V | VCC | 🔴 Red | Power (3.3V) |
 | GND | GND | ⚫ Black | Ground |
 
@@ -23,6 +31,16 @@
 |----------|--------------|------------|
 | T+ | Positive | 🔴 Red |
 | T- | Negative | 🔵 Blue |
+
+---
+
+## INA219 Current Sensor (I2C)
+| ESP32 Pin | INA219 Pin | Wire Color | Function |
+|-----------|------------|------------|----------|
+| GPIO21    | SDA        | ⚪ White   | I2C Data |
+| GPIO17    | SCL        | 🔵 Blue    | I2C Clock |
+| 3.3V / 5V | VCC        | 🔴 Red     | Power    |
+| GND       | GND        | ⚫ Black   | Ground   |
 
 ---
 
@@ -69,11 +87,10 @@
 
 ---
 
-## Blower Fan (PWM Control + Tachometer)
+## Blower Fan (PWM Control)
 | ESP32 Pin | Fan Connection | Wire Color | Function |
 |-----------|----------------|------------|----------|
 | GPIO16 | PWM Input | 🔵 Blue | PWM Speed Control |
-| GPIO17 | TACH Output | 🟢 Green | RPM Signal |
 | 12V+ | Fan Power + | 🔴 Red | 12V Power |
 | GND | Fan Power - | ⚫ Black | Ground |
 
@@ -127,16 +144,20 @@
 
 ## Quick Reference - ESP32 Pin Summary
 
-| GPIO | Component | Color | Function |
-|------|-----------|-------|----------|
-| 4 | Buzzer | 🟣 Purple | Buzzer Signal |
-| 13 | Door Switch | 🟡 Yellow | Lid Sensor |
-| 16 | Fan PWM | 🔵 Blue | Fan Speed |
-| 17 | Fan Tach | 🟢 Green | Fan RPM |
-| 18 | MAX31855 CLK | 🟡 Yellow | SPI Clock |
-| 19 | MAX31855 MISO | 🟢 Green | SPI Data |
-| 21 | MAX31855 CS | 🟠 Orange | Chip Select |
-| 22 | Display2 DIO | 🟣 Purple | Setpoint Data |
-| 23 | Display1 CLK | 🟤 Brown | Current Temp Clock |
-| 25 | Display2 CLK | 🟤 Brown | Setpoint Clock |
-| 26 | Display1 
+| GPIO | Component | Function |
+|------|-----------|----------|
+| 4    | Buzzer    | Signal   |
+| 13   | Door Switch | Lid Sensor |
+| 14   | MAX31855  | CS       |
+| 16   | Fan PWM   | Fan Speed |
+| 17   | I2C       | SCL (for INA219) |
+| 18   | MAX31855  | CLK      |
+| 19   | MAX31855  | MISO     |
+| 21   | I2C       | SDA (for INA219) |
+| 22   | TM1637 (Set) | DIO (Setpoint Data) |
+| 23   | TM1637 (Cur) | CLK (Current Temp Clock) |
+| 25   | TM1637 (Set) | CLK (Setpoint Clock) |
+| 26   | TM1637 (Cur) | DIO (Current Temp Data) |
+| 27   | Encoder   | Button   |
+| 32   | Encoder   | Phase A  |
+| 33   | Encoder   | Phase B  | 

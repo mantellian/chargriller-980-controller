@@ -14,6 +14,8 @@ This is a complete parts list for building an ESP32-based controller replacement
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
 | MAX31855 Thermocouple Amplifier Module | SPI, K-type compatible | 1 | Breakout board version |
+| K-type Thermocouple | High-temperature capable (e.g., up to 1000°F/500°C) | 1 | Required for temperature sensing |
+| INA219 Current Sensor Module | I2C, 26V, bidirectional | 1 | For fan current monitoring |
 
 ### Display
 | Part | Specs | Quantity | Notes |
@@ -24,11 +26,12 @@ This is a complete parts list for building an ESP32-based controller replacement
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
 | KY-040 Rotary Encoder | With push button | 1 | For setpoint adjustment |
-| Momentary Push Button | SPST, normally open | 1 | For PID enable/disable |
+
 
 ### Power Management
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
+| 12V DC Power Supply | 3A+ (e.g., laptop brick) | 1 | Powers fan, buck converter, and ESP32 |
 | DC-DC Buck Converter | 12V input, 5V/2A+ output | 1 | LM2596 or MP1584 based |
 
 ### Fan Control
@@ -72,9 +75,9 @@ This is a complete parts list for building an ESP32-based controller replacement
 ## Original Equipment (Not Included)
 
 These parts are reused from your existing CharGriller 980:
-- Temperature probe (K-type thermocouple)
+
 - Fan (12V, 3-wire with tachometer)
-- Door switches (2x, normally closed)
+- Door switch (1x, normally closed)
 - 12V power supply
 
 ---

@@ -16,7 +16,7 @@ So I'm building my own.
 - Support the **door switches** (turn off fan if a door is open, with override option)
 - Show current temp and setpoint on **dual LED displays** (bright enough for outdoor use)
 - Use a **physical rotary encoder** to adjust the setpoint without needing a phone or computer
-- **Long-press button** to enable/disable PID control
+- **Encoder button** for alarm silencing and setpoint confirmation
 - **Fan failure detection** with audible alert
 - Expose a **web interface** for monitoring and control
 - Full **Home Assistant integration** using ESPHome
@@ -33,15 +33,16 @@ So I'm building my own.
 | ESP32 Dev Board with External Antenna | Main controller | U.FL/IPEX connector for better WiFi range |
 | 2.4GHz WiFi Antenna | WiFi connectivity | 3-5dBi gain, U.FL connector |
 | MAX31855 Thermocouple Amplifier | Temp sensor interface | Works with stock K-type thermocouple probe |
+| INA219 Current Sensor | Fan current monitoring | I2C, 26V, bidirectional |
 | 2x TM1637 4-Digit LED Display | Display | One for current temp, one for setpoint - bright for outdoor use |
-| KY-040 Rotary Encoder | Setpoint adjustment | With integrated push button for door override |
-| Momentary Push Button | PID enable/disable | Long-press to toggle |
+| KY-040 Rotary Encoder | Setpoint adjustment | With integrated push button for alarm silence/setpoint confirm |
 | MOSFET Module | Fan PWM control | IRF520 or similar, handles 12V fan |
 | Active Piezo Beeper | Alert system | 5V beeper with SOS morse code alert pattern |
+| 12V DC Power Supply | Main power source | 3A+ recommended, powers fan, buck converter, and ESP32 |
 | 12V to 5V Buck Converter | Power for ESP32 | LM2596 or MP1584 based, 2A+ output |
 | OEM 12V Fan | Fire control | 3-wire with tachometer feedback |
 | OEM Temperature Probe | Chamber temp sensing | K-type thermocouple, reused from original |
-| OEM Door Switches | Safety interlocks | 2x switches wired in series |
+| OEM Door Switch | Safety interlock | 1x switch wired to GPIO |
 | Screw Terminal Blocks | Connections | For removable wiring |
 | 3D Printed Enclosure | Housing | PETG or ABS, magnet-mounted |
 
@@ -58,7 +59,7 @@ See [BOM.md](BOM.md) for complete parts list with specs and sourcing recommendat
 - **Door safety** - Automatically stops fan when door opens
 - **Door override** - Press rotary button to disable door safety during extended door-open operations
 - **Fan monitoring** - Detects fan failure and alerts via buzzer and display error code (ErF)
-- **Physical controls** - Rotary encoder for setpoint, button for PID on/off
+- **Physical controls** - Rotary encoder for setpoint, button for alarm silence/setpoint confirm
 
 ### Interface Options
 - **Dual LED displays** - Always-visible current temp and setpoint
@@ -89,7 +90,7 @@ If you're following along, feel free to fork this repo, open issues, or share su
 - [x] Bill of materials
 - [x] ESPHome configuration (initial version)
 - [ ] Probe type verification
-- [ ] GPIO pinout documentation
+- [x] GPIO pinout documentation
 - [ ] Perfboard prototype build
 - [ ] PID tuning
 - [ ] Display implementation (TM1637)

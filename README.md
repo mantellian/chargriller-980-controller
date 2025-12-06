@@ -1,10 +1,14 @@
 # Char-Griller 980 DIY Controller
 
-**Status: Work in Progress** - This project is under active development. Things will change, break, and improve as I go.
+**🔨 Work in Progress** - Actively under development. Expect changes.
 
-The goal is to build a drop-in replacement controller for my Char-Griller Gravity Fed 980 using an ESP32. The original controller started randomly shutting off mid-cook—sometimes it's fine, other times it dies. That's unacceptable.
+## Why This Exists
 
-So I'm building my own with better features and full control.
+My Char-Griller Gravity Fed 980's original controller started randomly dying mid-cook. After some research, I discovered the OEM replacement controller has been discontinued, and the aftermarket options like Fireboard are $300+. 
+
+For that price, I can build something better—with more features, better monitoring, and full control over the code.
+
+This project is my solution: an ESP32-based controller with PID control, web interface, Home Assistant integration, and none of the cloud dependencies of commercial units.
 
 ---
 
@@ -344,31 +348,6 @@ Contributions welcome! Here's how you can help:
 
 ---
 
-## Resources & References
-
-### Official Documentation
-- [ESPHome Documentation](https://esphome.io/)
-- [ESP32 Datasheet](https://www.espressif.com/en/products/socs/esp32)
-- [MAX31855 Datasheet](https://www.analog.com/en/products/max31855.html)
-- [INA219 Datasheet](https://www.ti.com/product/INA219)
-
-### Related Projects
-- [HeaterMeter](https://github.com/CapnBry/HeaterMeter) - Raspberry Pi BBQ controller
-- [CyberQ WiFi](https://www.bbqguru.com/storenav) - Commercial BBQ controller (for comparison)
-
-### Learning Resources
-- [PID Without a PhD](http://brettbeauregard.com/blog/2011/04/improving-the-beginners-pid-introduction/) - Excellent PID tutorial
-- [ESPHome Getting Started](https://esphome.io/guides/getting_started_command_line.html)
-- [K-type Thermocouple Basics](https://learn.adafruit.com/thermocouple/)
-- [Ziegler-Nichols Tuning](https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method)
-
-### Community
-- [ESPHome Discord](https://discord.gg/KhAMKrd)
-- [Home Assistant Forums](https://community.home-assistant.io/)
-- [r/smoking](https://reddit.com/r/smoking) - BBQ community
-
----
-
 ## Troubleshooting
 
 ### ESP32 Won't Boot
@@ -457,12 +436,6 @@ This project involves:
 - Web interface with organized control groups
 - Complete documentation (BOM, wiring, README)
 
-### v0.1 (November 2024)
-- Initial project setup
-- Component selection
-- Basic wiring plan
-- Requirements definition
-
 ### Planned v1.0 (Target: Q1 2025)
 - Working PID control (field tested on 5+ cooks)
 - Complete 3D printed enclosure with magnetic mounting
@@ -472,15 +445,11 @@ This project involves:
 
 ### Future v2.0
 - Second thermocouple for meat probe
-- Manual fan override mode
 - Door safety override option
-- Historical data logging
-- Mobile-friendly web dashboard
-- Smoke level monitoring (TBD)
 
 ---
 
 **Maintainer**: [mantellian](https://github.com/mantellian)  
 **Project Status**: Alpha/Testing - Use at your own risk  
-**Last Updated**: December 2024  
-**Config Version**: Matches chargriller-980.yaml as provided
+**Last Updated**: December 2025  
+

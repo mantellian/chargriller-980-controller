@@ -15,7 +15,12 @@ This is a complete parts list for building an ESP32-based controller replacement
 |------|-------|----------|-------|
 | MAX31855 Thermocouple Amplifier Module | SPI, K-type compatible | 1 | Breakout board version |
 | K-type Thermocouple | High-temperature capable (e.g., up to 1000°F/500°C) | 1 | Required for temperature sensing |
+
+### Current Sensing
+| Part | Specs | Quantity | Notes |
+|------|-------|----------|-------|
 | INA219 Current Sensor Module | I2C, 26V, bidirectional | 1 | For fan current monitoring |
+
 
 ### Display
 | Part | Specs | Quantity | Notes |

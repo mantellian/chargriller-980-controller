@@ -4,9 +4,9 @@
 
 ## Why This Exists
 
-My Char-Griller Gravity Fed 980's original controller started randomly dying mid-cook. After some research, I discovered the OEM replacement controller has been discontinued, and the aftermarket options like Fireboard are $300+. 
+My Char-Griller Gravity Fed 980's original controller started randomly dying mid-cook. After some research, I discovered the OEM replacement controller has been discontinued, and the aftermarket options like Fireboard are over $300. 
 
-For that price, I can build something better—with more features, better monitoring, and full control over the code.
+For that price, I can build something better with more features, better monitoring, and full control over the code.
 
 This project is my solution: an ESP32-based controller with PID control, web interface, Home Assistant integration, and none of the cloud dependencies of commercial units.
 
@@ -15,30 +15,30 @@ This project is my solution: an ESP32-based controller with PID control, web int
 ## Project Goals
 
 ### Core Requirements
-- ✅ **Standalone operation** - Works without internet or Home Assistant
-- ✅ **PID temperature control** - Maintains setpoint within ±2°F using proper PID algorithm
-- ✅ **K-type thermocouple** - Reads chamber temp using OEM probe via MAX31855
-- ✅ **Door safety interlocks** - Fan stops when doors open, with manual override option
-- ✅ **Dual LED displays** - Always-visible current temp and setpoint (outdoor-bright TM1637)
-- ✅ **Physical rotary encoder** - Adjust setpoint without phone/computer
-- ✅ **One-button control** - Encoder button for alarm silence and setpoint confirmation
-- ✅ **Fan failure detection** - Monitors current draw via INA219, alerts if fan stops
-- ✅ **Audible alarms** - SOS morse code pattern for critical alerts
+- **Standalone operation** - Works without internet or Home Assistant
+- **PID temperature control** - Maintains setpoint within ±2°F using proper PID algorithm
+- **K-type thermocouple** - Reads chamber temp using OEM probe via MAX31855
+- **Door safety interlocks** - Fan stops when doors open, with manual override option
+- **Dual LED displays** - Always visible current temp and setpoint (outdoor-bright TM1637)
+- **Physical rotary encoder** - Adjust setpoint without phone/computer
+- **One-button control** - Encoder button for alarm silence and setpoint confirmation
+- **Fan failure detection** - Monitors current draw via INA219, alerts if fan stops
+- **Audible alarms** - SOS Morse code pattern for critical alerts
 
 ### Advanced Features
-- ✅ **Web interface** - Built-in ESPHome web server for monitoring and control
-- ✅ **Home Assistant integration** - Full API integration with sensors and controls
-- ✅ **PID autotune** - Automated Ziegler-Nichols relay method tuning
-- ✅ **Temperature alarms** - High/low temp alerts with 3-minute delay
-- ✅ **WiFi fallback** - Creates its own AP if home network unavailable
-- ✅ **OTA updates** - Update firmware wirelessly
+- **Web interface** - Built-in ESPHome web server for monitoring and control
+- **Home Assistant integration** - Full API integration with sensors and controls
+- **PID autotune** - Automated Ziegler-Nichols relay method tuning
+- **Temperature alarms** - High/low temp alerts with 3-minute delay
+- **WiFi fallback** - Creates its own AP if home network unavailable
+- **OTA updates** - Update firmware wirelessly
 
 ### Safety Features
-- ✅ **Emergency shutdown** - Instantly kills fan and system
-- ✅ **Door interlocks** - Fan stops when either door opens (configurable)
-- ✅ **Fan failure detection** - Detects fan stoppage via current monitoring
-- ✅ **Over-temperature protection** - Emergency shutdown at 800°F
-- ✅ **Alarm system** - Persistent SOS alerts for critical conditions
+- **Emergency shutdown** - Instantly kills fan and system
+- **Door interlocks** - Fan stops when either door opens (configurable)
+- **Fan failure detection** - Detects fan stoppage via current monitoring
+- **Over-temperature protection** - Emergency shutdown at 800°F
+- **Alarm system** - Persistent SOS alerts for critical conditions
 
 ---
 
@@ -142,7 +142,7 @@ This project is my solution: an ESP32-based controller with PID control, web int
 
 ## Current Status
 
-### Completed ✅
+### Completed 
 - [x] Requirements definition
 - [x] Component selection and BOM
 - [x] Complete ESPHome configuration
@@ -204,7 +204,7 @@ This project is my solution: an ESP32-based controller with PID control, web int
 **Autotune Progress:**
 - Watch logs for "Peak high" and "Peak low" messages
 - System needs 8 peaks (4 complete cycles) to calculate values
-- Will timeout after 30 minutes if unable to complete
+- It will timeout after 30 minutes if unable to complete
 - Can manually stop with "Stop PID Autotune" button
 
 ---
@@ -393,14 +393,14 @@ Contributions welcome! Here's how you can help:
 MIT License - See [LICENSE](LICENSE) file for details.
 
 You are free to:
-- ✅ Use this project personally or commercially
-- ✅ Modify and distribute
-- ✅ Build and sell controllers based on this design
+- Use this project personally or commercially
+- Modify and distribute
+- Build and sell controllers based on this design
 
 Please:
-- ✅ Keep the license notice
-- ✅ Don't hold me liable for burnt brisket
-- ✅ Share improvements back with the community
+- Keep the license notice
+- Don't hold me liable for burnt brisket
+- Share improvements back with the community
 
 ---
 
@@ -415,11 +415,11 @@ This project involves:
 - **Food safety** - Risk of undercooking or spoilage
 
 **The author is NOT responsible for:**
-- ❌ Damage to your grill, property, or equipment
-- ❌ Injury resulting from use of this project
-- ❌ Food spoilage or foodborne illness
-- ❌ Fires or safety incidents
-- ❌ Any other damages or losses
+- Damage to your grill, property, or equipment
+- Injury resulting from use of this project
+- Food spoilage or foodborne illness
+- Fires or safety incidents
+- Any other damages or losses
 
 **Build and use at your own risk.** Always follow proper electrical safety practices and local codes. Never leave fire unattended. This is an experimental project, not a certified safety device.
 

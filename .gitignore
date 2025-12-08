@@ -9,3 +9,8 @@ __pycache__/
 
 # Secrets
 secrets.yaml
+
+# KiCad temporary files
+/KiCad/#auto_saved_files#/
+/KiCad/chargriller-980-backups/
+/KiCad/~*.lck

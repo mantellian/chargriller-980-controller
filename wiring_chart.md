@@ -163,7 +163,7 @@ Fan Positive (Red) → 12V+ (direct connection)
 
 **MOSFET Module Notes:**
 - If using pre-made MOSFET module, gate resistor and flyback diode may be included
-- Verify module is "logic-level" (Vgs < 5V) - IRF520, IRLZ44N, or similar
+- Verify module is "logic-level" (Vgs < 5V) - IRLZ34N, or similar
 - Heat sink recommended if fan draws > 2A
 
 ---

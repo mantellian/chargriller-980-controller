@@ -40,7 +40,7 @@ This is a complete parts list for building an ESP32-based controller replacement
 ### Fan Control
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
-| MOSFET Module | IRF520 or IRLZ44N, logic-level gate | 1 | For PWM fan control, must handle 12V/3A+ |
+| MOSFET Module | IRLZ34N | 1 | For PWM fan control, must handle 12V/3A+ |
 | Gate Resistor | 220Ω-1kΩ, 1/4W | 1 | Between ESP32 GPIO and MOSFET gate (may be included on module) |
 | Flyback Diode | 1N4007 or equivalent, 1A+ | 1 | Across fan terminals for protection (may be included on module) |
 
@@ -115,7 +115,7 @@ These parts are reused from your existing CharGriller 980:
 | INA219 Module | Adafruit 904 or generic I2C | Adafruit or Amazon |
 | TM1637 Display | Generic 4-digit 0.56" red | Amazon/AliExpress |
 | Buck Converter | LM2596 adjustable module | Amazon/AliExpress |
-| MOSFET Module | IRF520 module or IRLZ44N module | Amazon/AliExpress |
+| MOSFET Module | IRLZ34N module | Amazon/AliExpress |
 
 ## Notes on Component Selection
 

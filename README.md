@@ -53,7 +53,7 @@ This project is my solution: an ESP32-based controller with PID control, web int
 | INA219 | Current sensor | I2C (GPIO 21, 17) |
 | 2x TM1637 | 4-digit LED displays | GPIO 23/26 and 25/22 |
 | KY-040 | Rotary encoder with button | GPIO 32, 33, 27 |
-| IRF520 MOSFET | Fan PWM driver | GPIO 16 |
+| IRLZ34N MOSFET | Fan PWM driver | GPIO 16 |
 | LM2596 Buck | 12V→5V converter | Power supply |
 | Active Buzzer | Alert system | GPIO 4 |
 | Door Switch | Safety interlock | GPIO 13 |

@@ -3356,7 +3356,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Transistor_FET:IRLZ44N"
+		(symbol "Transistor_FET:IRLZ34N"
 			(pin_names
 				(hide yes)
 			)
@@ -3372,7 +3372,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "IRLZ44N"
+			(property "Value" "IRLZ34N"
 				(at 5.08 0 0)
 				(effects
 					(font
@@ -3392,7 +3392,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "http://www.irf.com/product-info/datasheets/data/irlz44n.pdf"
+			(property "Datasheet" "http://www.infineon.com/dgdl/irlz34npbf.pdf?fileId=5546d462533600a40153567206892720"
 				(at 5.08 -3.81 0)
 				(effects
 					(font
@@ -3402,7 +3402,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB"
+			(property "Description" "30A Id, 55V Vds, 35mOhm Rds, N-Channel HEXFET Power MOSFET, TO-220AB"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3429,7 +3429,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "IRLZ44N_0_1"
+			(symbol "IRLZ34N_0_1"
 				(polyline
 					(pts
 						(xy 0.254 1.905) (xy 0.254 -1.905)
@@ -3596,7 +3596,7 @@
 					)
 				)
 			)
-			(symbol "IRLZ44N_1_1"
+			(symbol "IRLZ34N_1_1"
 				(pin input line
 					(at -5.08 0 0)
 					(length 2.54)
@@ -3900,6 +3900,12 @@
 		(uuid "36e78af4-b91e-4de1-9ff6-5978ca922b8c")
 	)
 	(junction
+		(at 46.99 40.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "398e49c9-626e-4743-b83a-72c0a8f97895")
+	)
+	(junction
 		(at 220.98 67.31)
 		(diameter 0)
 		(color 0 0 0 1)
@@ -3909,7 +3915,19 @@
 		(at 40.64 33.02)
 		(diameter 0)
 		(color 0 0 0 0)
-		(uuid "5d5f900c-0190-42a9-9890-6addb525698c")
+		(uuid "56b0f337-a9fd-4473-a972-5f3c320f90ab")
+	)
+	(junction
+		(at 186.69 40.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5aa85365-123c-4c98-87a4-6982bf7f9730")
+	)
+	(junction
+		(at 177.8 40.64)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5b0304cf-feca-48e0-9686-138a5d6c50c2")
 	)
 	(junction
 		(at 25.4 93.98)
@@ -3946,12 +3964,6 @@
 		(diameter 0)
 		(color 0 0 0 1)
 		(uuid "94aed0e7-6b8c-41c7-b4f9-69d5c8262d47")
-	)
-	(junction
-		(at 46.99 40.64)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "a0ba34b4-3384-4f51-b05b-322fb6b5e45d")
 	)
 	(junction
 		(at 121.92 116.84)
@@ -4001,7 +4013,7 @@
 	)
 	(wire
 		(pts
-			(xy 177.8 40.64) (xy 229.87 40.64)
+			(xy 177.8 40.64) (xy 186.69 40.64)
 		)
 		(stroke
 			(width 0)
@@ -4020,17 +4032,6 @@
 			(color 72 72 0 1)
 		)
 		(uuid "068fdd47-368b-4d17-8d4b-6e54b11dfada")
-	)
-	(wire
-		(pts
-			(xy 34.29 41.91) (xy 34.29 40.64)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "08f178dd-6b17-4f2e-aa6c-8c3b5388b438")
 	)
 	(wire
 		(pts
@@ -4120,17 +4121,6 @@
 	)
 	(wire
 		(pts
-			(xy 77.47 40.64) (xy 77.47 24.13)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "1ec47913-f81d-4efa-986d-aa3df1039a62")
-	)
-	(wire
-		(pts
 			(xy 170.18 73.66) (xy 182.88 73.66)
 		)
 		(stroke
@@ -4139,17 +4129,6 @@
 			(color 72 72 0 1)
 		)
 		(uuid "20d7f738-3664-49e2-b115-5dd2480013cd")
-	)
-	(wire
-		(pts
-			(xy 34.29 40.64) (xy 40.64 40.64)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "21ce00f7-9638-446d-894a-09df379b2931")
 	)
 	(wire
 		(pts
@@ -4196,7 +4175,7 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 24.13) (xy 115.57 24.13)
+			(xy 186.69 40.64) (xy 177.8 40.64)
 		)
 		(stroke
 			(width 0)
@@ -4326,6 +4305,17 @@
 	)
 	(wire
 		(pts
+			(xy 186.69 40.64) (xy 229.87 40.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "4c186149-72c2-45d0-8261-39d324959332")
+	)
+	(wire
+		(pts
 			(xy 119.38 132.08) (xy 119.38 119.38)
 		)
 		(stroke
@@ -4414,17 +4404,6 @@
 	)
 	(wire
 		(pts
-			(xy 30.48 40.64) (xy 30.48 41.91)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "5c431f3c-b175-4ab3-b2d7-4175f61b2826")
-	)
-	(wire
-		(pts
 			(xy 229.87 50.8) (xy 179.07 50.8)
 		)
 		(stroke
@@ -4444,6 +4423,17 @@
 			(color 0 0 0 1)
 		)
 		(uuid "606b41cb-6751-4f31-9a21-d80d1d780478")
+	)
+	(wire
+		(pts
+			(xy 46.99 40.64) (xy 58.42 40.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 255 1)
+		)
+		(uuid "615e681d-db8c-4713-8eae-10a078ec27be")
 	)
 	(wire
 		(pts
@@ -4488,17 +4478,6 @@
 			(color 0 0 0 1)
 		)
 		(uuid "68a42a34-372e-4a67-96d2-8f450cccfeb8")
-	)
-	(wire
-		(pts
-			(xy 40.64 20.32) (xy 40.64 33.02)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 0 1)
-		)
-		(uuid "698a54a7-269a-47db-b141-7b419f65d5f7")
 	)
 	(wire
 		(pts
@@ -4673,17 +4652,6 @@
 	)
 	(wire
 		(pts
-			(xy 46.99 40.64) (xy 77.47 40.64)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "8e13fc85-e264-4362-b3d0-2f23db279618")
-	)
-	(wire
-		(pts
 			(xy 26.67 99.06) (xy 39.37 99.06)
 		)
 		(stroke
@@ -4736,17 +4704,6 @@
 			(color 255 0 0 1)
 		)
 		(uuid "9751ae0d-5a57-4259-b595-fe58c8d98d72")
-	)
-	(wire
-		(pts
-			(xy 77.47 24.13) (xy 107.95 24.13)
-		)
-		(stroke
-			(width 0)
-			(type default)
-			(color 0 0 255 1)
-		)
-		(uuid "9aca73ac-ebe5-4b40-9940-807b4ad1f13c")
 	)
 	(wire
 		(pts
@@ -4968,7 +4925,7 @@
 	)
 	(wire
 		(pts
-			(xy 30.48 41.91) (xy 34.29 41.91)
+			(xy 30.48 40.64) (xy 40.64 40.64)
 		)
 		(stroke
 			(width 0)
@@ -5001,6 +4958,17 @@
 	)
 	(wire
 		(pts
+			(xy 40.64 20.32) (xy 40.64 33.02)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "c1e4203a-f113-4650-a005-25d65baf67c6")
+	)
+	(wire
+		(pts
 			(xy 124.46 93.98) (xy 124.46 135.89)
 		)
 		(stroke
@@ -5009,6 +4977,17 @@
 			(color 194 0 194 1)
 		)
 		(uuid "c3929e02-e496-479f-951a-41f61799924a")
+	)
+	(wire
+		(pts
+			(xy 177.8 40.64) (xy 66.04 40.64)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 255 1)
+		)
+		(uuid "c57318d8-84e4-4182-ae28-20a2c1c76e5c")
 	)
 	(wire
 		(pts
@@ -5100,7 +5079,7 @@
 	)
 	(wire
 		(pts
-			(xy 186.69 99.06) (xy 186.69 24.13)
+			(xy 186.69 99.06) (xy 186.69 40.64)
 		)
 		(stroke
 			(width 0)
@@ -5471,80 +5450,6 @@
 			(project ""
 				(path "/03f3d33b-2bbe-40d1-80b3-42089c3be5f4"
 					(reference "U3")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Transistor_FET:IRLZ44N")
-		(at 46.99 35.56 90)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "1a625f39-d732-4c51-a747-ace4a6d68396")
-		(property "Reference" "Q1"
-			(at 46.99 26.67 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "IRLZ44N"
-			(at 46.99 29.21 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-220-3_Vertical"
-			(at 48.895 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-					(italic yes)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "http://www.irf.com/product-info/datasheets/data/irlz44n.pdf"
-			(at 50.8 30.48 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-				(hide yes)
-			)
-		)
-		(property "Description" "47A Id, 55V Vds, 22mOhm Rds Single N-Channel HEXFET Power MOSFET, TO-220AB"
-			(at 46.99 35.56 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "3"
-			(uuid "e9b9e9d7-f6f1-414a-8ee6-9197b353771f")
-		)
-		(pin "2"
-			(uuid "f3aab1d8-bed7-4df9-b586-6d22818b489c")
-		)
-		(pin "1"
-			(uuid "76bcad05-9bd7-49c8-ba23-b817226595b6")
-		)
-		(instances
-			(project ""
-				(path "/03f3d33b-2bbe-40d1-80b3-42089c3be5f4"
-					(reference "Q1")
 					(unit 1)
 				)
 			)
@@ -6152,7 +6057,7 @@
 	)
 	(symbol
 		(lib_id "Device:R")
-		(at 111.76 24.13 90)
+		(at 62.23 40.64 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6161,7 +6066,7 @@
 		(fields_autoplaced yes)
 		(uuid "6c813a1e-047d-4a76-a1b5-cd3942897708")
 		(property "Reference" "R1"
-			(at 111.76 17.78 90)
+			(at 62.23 34.29 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6169,7 +6074,7 @@
 			)
 		)
 		(property "Value" "220Ω"
-			(at 111.76 20.32 90)
+			(at 62.23 36.83 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6177,7 +6082,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 111.76 25.908 90)
+			(at 62.23 42.418 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6186,7 +6091,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 111.76 24.13 0)
+			(at 62.23 40.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6195,7 +6100,7 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 111.76 24.13 0)
+			(at 62.23 40.64 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7037,6 +6942,80 @@
 			(project ""
 				(path "/03f3d33b-2bbe-40d1-80b3-42089c3be5f4"
 					(reference "U5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Transistor_FET:IRLZ34N")
+		(at 46.99 35.56 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f492ec7e-41e9-4916-a8cb-66373a60fc4f")
+		(property "Reference" "Q2"
+			(at 46.99 26.67 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "IRLZ34N"
+			(at 46.99 29.21 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Package_TO_SOT_THT:TO-220-3_Vertical"
+			(at 48.895 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+					(italic yes)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "http://www.infineon.com/dgdl/irlz34npbf.pdf?fileId=5546d462533600a40153567206892720"
+			(at 50.8 30.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+		(property "Description" "30A Id, 55V Vds, 35mOhm Rds, N-Channel HEXFET Power MOSFET, TO-220AB"
+			(at 46.99 35.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "3"
+			(uuid "b0d09699-94d7-49ee-bf91-fd2cd08b23c6")
+		)
+		(pin "2"
+			(uuid "9d67cb56-8cc0-48a1-8701-c758743c26f1")
+		)
+		(pin "1"
+			(uuid "5bdfdb52-efc5-4b7d-8ad5-94f2e5eafb14")
+		)
+		(instances
+			(project ""
+				(path "/03f3d33b-2bbe-40d1-80b3-42089c3be5f4"
+					(reference "Q2")
 					(unit 1)
 				)
 			)

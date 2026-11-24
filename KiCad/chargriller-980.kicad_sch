@@ -277,7 +277,7 @@
 			(symbol "Conn_01x05_1_1"
 				(rectangle
 					(start -1.27 6.35)
-					(end 15.24 -6.35)
+					(end 15.24 -8.89)
 					(stroke
 						(width 0.254)
 						(type default)
@@ -446,6 +446,35 @@
 						)
 					)
 					(number "5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(rectangle
+					(start -1.27 -7.493)
+					(end 0 -7.747)
+					(stroke
+						(width 0.1524)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(pin passive line
+					(at -5.08 -7.62 0)
+					(length 3.81)
+					(name "SDI"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "8"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -4406,6 +4435,39 @@
 		(pts
 			(xy 229.87 50.8) (xy 179.07 50.8)
 		)
+	(wire
+		(pts
+			(xy 229.87 53.34) (xy 181.61 53.34)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "897372e0-e22d-4d88-928d-42426c1b8785")
+	)
+	(wire
+		(pts
+			(xy 181.61 53.34) (xy 181.61 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "14023f98-2f68-4e46-bf62-3622b9f8d98d")
+	)
+	(wire
+		(pts
+			(xy 181.61 93.98) (xy 170.18 93.98)
+		)
+		(stroke
+			(width 0)
+			(type default)
+			(color 0 0 0 1)
+		)
+		(uuid "79b8b084-0840-499c-810d-1435ad6c5d4f")
+	)
 		(stroke
 			(width 0)
 			(type default)
@@ -6406,6 +6468,9 @@
 		)
 		(pin "4"
 			(uuid "4f24f5fc-38e2-4bb8-bfd2-bd864590bb84")
+		)
+		(pin "8"
+			(uuid "4947716f-fbef-4b58-a613-402e9955a58d")
 		)
 		(instances
 			(project ""

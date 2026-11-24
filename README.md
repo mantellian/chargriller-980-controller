@@ -148,29 +148,25 @@ The Char-Griller 980 features two safety switches on the charcoal hopper: the **
 ### Completed 
 - [x] Requirements definition
 - [x] Component selection and BOM
-- [x] Complete ESPHome configuration
-- [x] GPIO pinout documentation
-- [x] PID control algorithm with autotune
-- [x] All display logic and error codes
-- [x] Alarm system with SOS pattern
-- [x] Fan failure detection
-- [x] Door safety interlocks
-- [x] Web interface with organized controls
+- [x] Complete ESPHome configuration with PID & Ziegler-Nichols autotune
+- [x] Confirmed OEM probe is PT1000 RTD (Part #801126); upgraded amplifier to MAX31865
+- [x] Updated KiCad schematic with MAX31865 and SPI MOSI on GPIO5
+- [x] GPIO pinout and visual wiring diagrams ([`WIRING_DIAGRAM.md`](WIRING_DIAGRAM.md))
+- [x] All display logic and error codes (`Err`, `FAn`, `oPEn`, `door`, `  HI`, `  Lo`, `tEmP`)
+- [x] Alarm system with SOS Morse code buzzer pattern
+- [x] Fan current monitoring and failure detection via INA219
+- [x] Door safety interlocks (pauses fan, resets integral windup)
+- [x] Manual fan override mode (0–100% speed slider in web interface)
+- [x] Web server authentication & credentials template (`secrets.yaml.example`)
 
 ### In Progress 🔨
-- [ ] Thermocouple probe verification (need to confirm K-type)
-- [ ] Perfboard prototype assembly
-- [ ] Initial PID tuning values validation
-- [ ] Field testing without food
-- [ ] 3D printed enclosure design
+- [ ] **KiCad PCB Layout**: Design custom PCB to fit within stock grill opening
+- [ ] **Magnetic Quick-Detach Enclosure**: 3D printed enclosure designed to house the PCB and snap into the grill opening with neodymium magnets for quick removal and indoor storage
 
 ### Planned 📋
-- [ ] Enclosure with magnetic mounting
+- [ ] Benchtop testing of assembled PCB (5V buck converter calibration, sensor verification)
+- [ ] Field testing & PID autotuning on real cook
 - [ ] Long-duration cook testing (8+ hours)
-- [ ] Manual fan override mode (for startup/cleaning)
-- [ ] Door safety override option
-- [ ] Second probe for meat temperature (future v2.0)
-- [ ] Historical data logging and graphing
 
 ---
 
@@ -234,25 +230,29 @@ Always follow proper electrical safety practices and local codes.
 
 ## Version History
 
-### v0.2 (Current - December 2024)
+### v0.3 (Current - November 2026)
+- **Sensor Upgrade**: Confirmed OEM pit probe is PT1000 RTD (Part #801126); upgraded amplifier to MAX31865 with SPI MOSI on GPIO5.
+- **KiCad Schematic**: Added MAX31865 with pin 8 (SDI) and routed connection to ESP32 GPIO5.
+- **Visual Schematics**: Added [`WIRING_DIAGRAM.md`](WIRING_DIAGRAM.md) with complete system flowcharts, star ground, and circuit details.
+- **Manual Fan Override**: Added web UI toggle and 0–100% slider to manually control fan speed for lighting/cleaning.
+- **Door Interlock Refactor**: Clean fan pause on hopper open; preserves PID state and resets integral windup. Compatible with stock 2-switch series harness or manual toggle.
+- **Safety Fixes**: Explicit fan cutoff on 800°F emergency shutdown; NaN guards on sensor inputs; autotune global state reset.
+- **Web Auth & Config**: Added web UI username/password support and `esphome/secrets.yaml.example` template.
+
+### v0.2 (December 2024)
 - Complete ESPHome configuration with all features
 - PID control with Ziegler-Nichols autotune
 - All alarm systems functional (fan, high temp, low temp)
 - SOS morse code buzzer pattern
 - Door safety interlocks
 - Web interface with organized control groups
-- Complete documentation (BOM, wiring, README)
+- Initial documentation (BOM, wiring, README)
 
-### Planned v1.0 (Target: Q1 2025)
-- Working PID control (field tested on 5+ cooks)
-- Complete 3D printed enclosure with magnetic mounting
-- Verified through multiple successful long-duration cooks
-- Refined PID values for optimal performance
-- Complete build guide with photos
-
-### Future v2.0
-- Second thermocouple for meat probe
-- Door safety override option
+### Planned v1.0
+- Completed custom PCB manufactured and verified
+- Complete 3D printed magnetic quick-detach enclosure for indoor storage
+- Working PID control field-tested on real cooks
+- Complete build guide with photos and wiring harnesses
 
 ---
 

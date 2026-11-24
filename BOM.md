@@ -13,8 +13,13 @@ This is a complete parts list for building an ESP32-based controller replacement
 ### Temperature Sensing
 | Part | Specs | Quantity | Notes |
 |------|-------|----------|-------|
-| MAX31855 Thermocouple Amplifier Module | SPI, K-type compatible | 1 | Breakout board version with screw terminals |
-| K-type Thermocouple | High-temperature, 1000°F+ rated | 1 | Required for chamber temperature sensing |
+| MAX31865 RTD Amplifier Module | SPI, PT100/PT1000 compatible | 1 | Adafruit #3328 or generic breakout. **Must swap Rref resistor to 4300Ω 0.1% for PT1000.** Solder 2WIRE jumper on board. |
+| OEM Pit Probe (reused) | Char-Griller Part #801126, PT1000 RTD, 2-wire | 1 | Stock probe from the grill. Confirmed PT1000 (not K-type). Connect to MAX31865 RTD+/RTD- terminals. |
+
+> **Why MAX31865 instead of MAX31855?**  
+> The OEM Char-Griller 980 pit probe (Part #801126) is a **PT1000 RTD**, not a K-type thermocouple.  
+> The MAX31855 only reads K-type thermocouples and is incompatible with the OEM probe.  
+> The MAX31865 reads PT100/PT1000 RTDs over the same SPI bus.
 
 ### Current Sensing
 | Part | Specs | Quantity | Notes |
@@ -99,9 +104,9 @@ This is a complete parts list for building an ESP32-based controller replacement
 ## Original Equipment (Reused from CharGriller 980)
 
 These parts are reused from your existing CharGriller 980:
-- **Fan** - 12V axial fan, 3-wire with tachometer (current draw: typically 1-3A)
-- **Door switch** - 1x normally closed (NC) switch, closes when lid opens
-- **Temperature probe** - K-type thermocouple with aviation-style connector
+- **Fan** - 12V axial fan (current draw: typically 1-3A)
+- **Chamber access toggle switch** - SPST toggle wired to GPIO13 (replaces OEM NC pressure switch which is bypassed)
+- **Temperature probe** - OEM pit probe Part #801126 (PT1000 RTD, 2-wire Molex-style connector) — reused directly with MAX31865
 - **Grill body** - Metal frame for magnetic mounting
 
 ## Part Number References
@@ -111,7 +116,7 @@ These parts are reused from your existing CharGriller 980:
 | Component | Model/Part Number | Source |
 |-----------|-------------------|--------|
 | ESP32 Dev Board | ESP32-DevKitC-32U | Espressif official |
-| MAX31855 Module | Adafruit 269 or generic breakout | Adafruit or Amazon |
+| MAX31865 Module | Adafruit #3328 or generic PT1000 breakout | Adafruit or Amazon |
 | INA219 Module | Adafruit 904 or generic I2C | Adafruit or Amazon |
 | TM1637 Display | Generic 4-digit 0.56" red | Amazon/AliExpress |
 | Buck Converter | LM2596 adjustable module | Amazon/AliExpress |

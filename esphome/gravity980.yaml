@@ -10,6 +10,7 @@ esphome:
           id(pid_enabled) = false;
           id(integral) = 0.0;
           id(previous_error) = 0.0;
+          id(manual_fan_mode) = false;
 
 esp32:
   board: esp32dev
@@ -42,6 +43,10 @@ ota:
 web_server:
   port: 80
   version: 3
+  # Add web_username and web_password to secrets.yaml
+  auth:
+    username: !secret web_username
+    password: !secret web_password
   sorting_groups:
     - id: main_controls_group
       name: "Main Controls"
@@ -49,9 +54,12 @@ web_server:
     - id: diagnostics_group
       name: "Diagnostics"
       sorting_weight: 2
+    - id: manual_override_group
+      name: "Manual Fan Override"
+      sorting_weight: 3
     - id: pid_settings_group
       name: "PID Settings"
-      sorting_weight: 3
+      sorting_weight: 4
 
 # -------------------------------------------------------
 # Global Variables
@@ -105,6 +113,18 @@ globals:
     type: float
     restore_value: yes
     initial_value: '0.8'
+  # Manual fan override
+  - id: manual_fan_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: manual_fan_speed
+    type: float
+    restore_value: no
+    initial_value: '50.0'
+  # Autotune state
+  # NOTE: These were previously 'static' locals inside the PID lambda.
+  # Moved to globals so they are properly reset between autotune runs.
   - id: autotune_active
     type: bool
     restore_value: no
@@ -133,6 +153,18 @@ globals:
     type: uint32_t
     restore_value: no
     initial_value: '0'
+  - id: autotune_relay_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: autotune_last_temp
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+  - id: autotune_rising
+    type: bool
+    restore_value: no
+    initial_value: 'true'
 
 # -------------------------------------------------------
 # I2C Bus
@@ -143,17 +175,32 @@ i2c:
   scan: true
 
 # -------------------------------------------------------
-# SPI – MAX31855 Thermocouple Amplifier
+# SPI – MAX31865 RTD Amplifier
+# -------------------------------------------------------
+# HARDWARE CHANGE from MAX31855:
+#   - The OEM pit probe (Char-Griller Part #801126) is a PT1000 RTD, NOT a K-type thermocouple.
+#   - Replace MAX31855 with MAX31865 breakout board.
+#   - MAX31865 requires MOSI (write-capable SPI) for configuration registers.
+#   - Add a wire from ESP32 GPIO5 → MAX31865 SDI/MOSI pin.
+#
+# MAX31865 breakout board hardware config (do this before installing):
+#   1. Solder the 2WIRE jumper (OEM probe is 2-wire).
+#   2. Replace the 430Ω Rref resistor with 4300Ω 0.1% (PT1000 requires 4300Ω Rref).
+#      Adafruit boards ship with 430Ω for PT100 — swap it for PT1000 use.
 # -------------------------------------------------------
 spi:
   clk_pin: GPIO18
   miso_pin: GPIO19
+  mosi_pin: GPIO5  # Required for MAX31865; add jumper wire GPIO5 → MAX31865 SDI
 
 sensor:
-  # MAX31855 thermocouple - Output in Fahrenheit
-  - platform: max31855
+  # MAX31865 PT1000 RTD — OEM probe, Part #801126
+  # Output converted from Celsius → Fahrenheit via filter chain
+  - platform: max31865
     name: "Current Temperature"
     cs_pin: GPIO14
+    reference_resistance: 4300   # Rref for PT1000 (must match physical resistor on board)
+    nominal_resistance: 1000     # PT1000 = 1000Ω at 0°C
     update_interval: 1s
     id: pit_temp
     filters:
@@ -168,7 +215,12 @@ sensor:
       then:
         - lambda: |-
             if (x >= 800.0) {
+              // FIX: Explicitly zero fan PWM first — don't rely solely on power_switch turn_off
+              id(fan_pwm).set_level(0.0);
+              id(current_fan_duty) = 0.0;
               id(pid_enabled) = false;
+              id(manual_fan_mode) = false;
+              id(autotune_active) = false;
               id(power_switch).turn_off();
               ESP_LOGW("safety", "EMERGENCY: Temperature exceeded 800°F! Shutting down.");
             }
@@ -177,6 +229,8 @@ sensor:
       sorting_weight: 1
 
   # INA219 Fan Current Sensor
+  # NOTE: Default shunt resistor is 0.1Ω. Verify against BOM — if different,
+  # add: shunt_resistance: X.XXX
   - platform: ina219
     address: 0x40
     current:
@@ -190,10 +244,10 @@ sensor:
     name: "Encoder Position"
     id: encoder_position
     internal: true
-    pin_a: 
+    pin_a:
       number: GPIO32
       mode: INPUT_PULLUP
-    pin_b: 
+    pin_b:
       number: GPIO33
       mode: INPUT_PULLUP
     min_value: 175
@@ -210,7 +264,7 @@ sensor:
 # TM1637 Displays
 # -------------------------------------------------------
 display:
-  # Current temperature or error code
+  # Left display: current temperature or status code
   - platform: tm1637
     id: tm1637_current
     clk_pin: GPIO23
@@ -233,7 +287,7 @@ display:
         it.print(" ---");
       }
 
-  # Setpoint or error display
+  # Right display: setpoint or status code
   - platform: tm1637
     id: tm1637_setpoint
     clk_pin: GPIO25
@@ -260,20 +314,41 @@ display:
 # Binary Sensors
 # -------------------------------------------------------
 binary_sensor:
-  # Door switch
+  # Charcoal chamber toggle switch (GPIO13)
+  # Replaces the OEM NC pressure switch (bypassed).
+  # Wire a SPST toggle: one terminal to GPIO13, other to GND.
+  # Toggle OPEN (GPIO13 floats HIGH via pullup) = chamber open → fan pauses.
+  # Toggle CLOSED (GPIO13 pulled LOW) = chamber closed → fan resumes.
+  #
+  # FIX vs original: door open now PAUSES the fan only — does NOT kill power/PID.
+  # PID state is preserved; integral is reset to prevent windup during open period.
   - platform: gpio
     pin:
       number: GPIO13
       mode: INPUT_PULLUP
     id: lid_switch
-    name: "Door Switch"
+    name: "Chamber Switch"
     device_class: door
     on_press:
       then:
-        - switch.turn_off: power_switch
+        - lambda: |-
+            // Immediately stop the fan — opening charcoal chamber
+            id(fan_pwm).set_level(0.0);
+            id(current_fan_duty) = 0.0;
+            // Reset integral to prevent windup accumulation during open period
+            id(integral) = 0.0;
+            id(previous_error) = 0.0;
+            // Clear stale fan error — fan stopping is intentional here
+            if (id(fan_error_active).state) {
+              id(fan_error_active).turn_off();
+            }
+            ESP_LOGI("door", "Charcoal chamber open — fan paused, PID suspended");
     on_release:
       then:
-        - switch.turn_on: power_switch
+        - lambda: |-
+            // Reset derivative term to avoid a spike on first PID tick after resume
+            id(previous_error) = 0.0;
+            ESP_LOGI("door", "Charcoal chamber closed — PID resuming");
     web_server:
       sorting_group_id: diagnostics_group
       sorting_weight: 11
@@ -300,7 +375,7 @@ binary_sensor:
             } else if (id(setpoint_being_adjusted)) {
               id(temp_setpoint_value) = id(pending_setpoint);
               id(setpoint_being_adjusted) = false;
-              ESP_LOGI("setpoint", "Temperature setpoint confirmed: %.0f°F", id(temp_setpoint_value));
+              ESP_LOGI("setpoint", "Setpoint confirmed via button: %.0f°F", id(temp_setpoint_value));
             }
 
 # -------------------------------------------------------
@@ -315,11 +390,13 @@ script:
           if (id(setpoint_being_adjusted)) {
             id(temp_setpoint_value) = id(pending_setpoint);
             id(setpoint_being_adjusted) = false;
-            ESP_LOGI("setpoint", "Temperature setpoint auto-confirmed: %.0f°F", id(temp_setpoint_value));
+            ESP_LOGI("setpoint", "Setpoint auto-confirmed: %.0f°F", id(temp_setpoint_value));
           }
 
+  # SOS Morse code pattern: ● ● ●  ▬ ▬ ▬  ● ● ●
+  # Total duration: ~5s. alarm_beep delay must exceed this.
   - id: sos_beep
-    mode: queued
+    mode: single  # FIX: was 'queued' — 'single' prevents backlog buildup
     then:
       - switch.turn_on: buzzer
       - delay: 200ms
@@ -365,7 +442,9 @@ script:
             lambda: 'return id(buzzer_enabled) && !id(alarm_silenced);'
           then:
             - script.execute: sos_beep
-            - delay: 3s
+            # FIX: Delay must be longer than SOS pattern (~5s) to avoid queuing overlap.
+            # 7s = ~5s SOS + ~2s silence between repetitions.
+            - delay: 7s
 
 # -------------------------------------------------------
 # Fan PWM Output
@@ -391,6 +470,7 @@ switch:
           id(pid_enabled) = true;
           id(integral) = 0.0;
           id(previous_error) = 0.0;
+          id(manual_fan_mode) = false;
           ESP_LOGI("power", "Grill powered ON");
     turn_off_action:
       - lambda: |-
@@ -398,6 +478,9 @@ switch:
           id(integral) = 0.0;
           id(previous_error) = 0.0;
           id(fan_pwm).set_level(0.0);
+          id(current_fan_duty) = 0.0;
+          id(manual_fan_mode) = false;
+          id(autotune_active) = false;
           ESP_LOGI("power", "Grill powered OFF");
     web_server:
       sorting_group_id: main_controls_group
@@ -459,6 +542,33 @@ switch:
       sorting_group_id: diagnostics_group
       sorting_weight: 3
 
+  # Manual fan override — bypasses PID for startup, cleaning, etc.
+  # Set desired speed with "Manual Fan Speed" slider below, then enable this.
+  # Disables automatically when Power is turned off.
+  - platform: template
+    name: "Manual Fan Mode"
+    id: manual_fan_mode_switch
+    icon: "mdi:fan-auto"
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    on_turn_on:
+      - lambda: |-
+          id(manual_fan_mode) = true;
+          // Apply current manual speed immediately
+          id(fan_pwm).set_level(id(manual_fan_speed) / 100.0);
+          id(current_fan_duty) = id(manual_fan_speed) / 100.0;
+          ESP_LOGI("manual_fan", "Manual fan mode ON at %.0f%%", id(manual_fan_speed));
+    on_turn_off:
+      - lambda: |-
+          id(manual_fan_mode) = false;
+          // Reset PID state to avoid derivative/integral spike on resume
+          id(previous_error) = 0.0;
+          id(integral) = 0.0;
+          ESP_LOGI("manual_fan", "Manual fan mode OFF — returning to PID");
+    web_server:
+      sorting_group_id: manual_override_group
+      sorting_weight: 1
+
 # -------------------------------------------------------
 # Buttons
 # -------------------------------------------------------
@@ -469,7 +579,7 @@ button:
       - lambda: |-
           id(alarm_silenced) = true;
           id(buzzer_switch).turn_off();
-          ESP_LOGI("buzzer", "Alarm silenced via button");
+          ESP_LOGI("buzzer", "Alarm silenced via web button");
     web_server:
       sorting_group_id: main_controls_group
       sorting_weight: 4
@@ -479,20 +589,33 @@ button:
     on_press:
       - lambda: |-
           if (!id(pid_enabled)) {
-            ESP_LOGW("autotune", "Cannot start autotune: Grill is OFF");
+            ESP_LOGW("autotune", "Cannot start autotune: grill is OFF");
             return;
           }
           if (id(autotune_active)) {
             ESP_LOGW("autotune", "Autotune already running");
             return;
           }
-          
-          ESP_LOGI("autotune", "Starting PID autotune...");
+          if (id(manual_fan_mode)) {
+            ESP_LOGW("autotune", "Cannot start autotune while in manual fan mode — disable manual first");
+            return;
+          }
+          if (id(lid_switch).state) {
+            ESP_LOGW("autotune", "Cannot start autotune while chamber is open");
+            return;
+          }
+
+          ESP_LOGI("autotune", "Starting PID autotune (Ziegler-Nichols relay method)...");
+
+          // FIX: Reset ALL autotune state including formerly-static locals
           id(autotune_active) = true;
           id(autotune_peak_count) = 0;
           id(autotune_peak_high) = 0.0;
           id(autotune_peak_low) = 999.0;
           id(autotune_cycle_start) = millis();
+          id(autotune_relay_state) = false;
+          id(autotune_last_temp) = 0.0;
+          id(autotune_rising) = true;
           id(integral) = 0.0;
           id(previous_error) = 0.0;
     web_server:
@@ -506,13 +629,15 @@ button:
           if (id(autotune_active)) {
             ESP_LOGI("autotune", "Autotune stopped manually");
             id(autotune_active) = false;
+            id(integral) = 0.0;
+            id(previous_error) = 0.0;
           }
     web_server:
       sorting_group_id: pid_settings_group
       sorting_weight: 5
 
 # -------------------------------------------------------
-# Number inputs for Setpoint and PID tuning
+# Number Inputs
 # -------------------------------------------------------
 number:
   - platform: template
@@ -529,7 +654,10 @@ number:
     on_value:
       - lambda: |-
           id(temp_setpoint_value) = x;
-          ESP_LOGI("setpoint", "Target temperature set to: %.0f°F", x);
+          // FIX: Cancel any pending encoder adjustment so web slider wins
+          id(pending_setpoint) = x;
+          id(setpoint_being_adjusted) = false;
+          ESP_LOGI("setpoint", "Target temperature set to %.0f°F via web", x);
     web_server:
       sorting_group_id: main_controls_group
       sorting_weight: 2
@@ -579,145 +707,184 @@ number:
       sorting_group_id: pid_settings_group
       sorting_weight: 3
 
+  # Manual fan speed — active only when Manual Fan Mode switch is ON
+  - platform: template
+    name: "Manual Fan Speed"
+    id: manual_fan_speed_number
+    min_value: 0
+    max_value: 100
+    step: 1
+    initial_value: 50
+    optimistic: true
+    unit_of_measurement: "%"
+    icon: "mdi:fan"
+    mode: slider
+    on_value:
+      - lambda: |-
+          id(manual_fan_speed) = x;
+          if (id(manual_fan_mode)) {
+            id(fan_pwm).set_level(x / 100.0);
+            id(current_fan_duty) = x / 100.0;
+          }
+    web_server:
+      sorting_group_id: manual_override_group
+      sorting_weight: 2
+
 # -------------------------------------------------------
 # PID Control Loop
 # -------------------------------------------------------
 interval:
-  # PID calculation every second
+  # Main PID tick — runs every 1 second
   - interval: 1s
     then:
       - lambda: |-
+
+          // ── Guard: system off or sensor fault ─────────────────────────────
           if (!id(pid_enabled) || isnan(id(pit_temp).state)) {
             id(fan_pwm).set_level(0.0);
             return;
           }
-          
+
+          // ── Guard: chamber open → fan paused ─────────────────────────────
+          // on_press already zeroed the fan; this keeps it at zero every tick.
+          if (id(lid_switch).state) {
+            id(fan_pwm).set_level(0.0);
+            id(current_fan_duty) = 0.0;
+            return;
+          }
+
+          // ── Manual fan override ───────────────────────────────────────────
+          if (id(manual_fan_mode)) {
+            float spd = id(manual_fan_speed) / 100.0;
+            id(fan_pwm).set_level(spd);
+            id(current_fan_duty) = spd;
+            return;
+          }
+
           float current_temp = id(pit_temp).state;
           float setpoint = id(temp_setpoint_value);
-          
-          // Autotune mode - relay method
+
+          // ── Autotune: Ziegler-Nichols relay method ────────────────────────
           if (id(autotune_active)) {
-            static bool relay_state = false;
-            static float last_temp = 0.0;
-            static bool rising = true;
-            
-            // Relay control: turn on if below setpoint, off if above
+
+            // Relay control: fan full-on below setpoint, off above
             if (current_temp < setpoint - 1.0) {
-              relay_state = true;
+              id(autotune_relay_state) = true;
               id(fan_pwm).set_level(id(autotune_output_high));
             } else if (current_temp > setpoint + 1.0) {
-              relay_state = false;
+              id(autotune_relay_state) = false;
               id(fan_pwm).set_level(0.0);
             }
-            
-            // Detect peaks
-            if (last_temp != 0.0) {
-              if (rising && current_temp < last_temp) {
-                // Found a peak (high point)
-                rising = false;
+
+            // Peak detection using globals (not statics — resets properly between runs)
+            if (id(autotune_last_temp) != 0.0) {
+              if (id(autotune_rising) && current_temp < id(autotune_last_temp)) {
+                id(autotune_rising) = false;
                 if (id(autotune_peak_count) > 0) {
-                  id(autotune_peak_high) = last_temp;
-                  ESP_LOGI("autotune", "Peak high: %.1f°F", last_temp);
+                  id(autotune_peak_high) = id(autotune_last_temp);
+                  ESP_LOGI("autotune", "Peak high: %.1f°F", id(autotune_last_temp));
                 }
                 id(autotune_peak_count)++;
-              } else if (!rising && current_temp > last_temp) {
-                // Found a valley (low point)
-                rising = true;
+              } else if (!id(autotune_rising) && current_temp > id(autotune_last_temp)) {
+                id(autotune_rising) = true;
                 if (id(autotune_peak_count) > 0) {
-                  id(autotune_peak_low) = last_temp;
-                  ESP_LOGI("autotune", "Peak low: %.1f°F", last_temp);
+                  id(autotune_peak_low) = id(autotune_last_temp);
+                  ESP_LOGI("autotune", "Peak low: %.1f°F", id(autotune_last_temp));
                 }
               }
             }
-            last_temp = current_temp;
-            
-            // After 4 complete cycles, calculate PID values
+            id(autotune_last_temp) = current_temp;
+
+            // After 4 complete cycles (8 peaks), calculate PID values
             if (id(autotune_peak_count) >= 8) {
-              uint32_t period_ms = millis() - id(autotune_cycle_start);
-              float period_sec = period_ms / 1000.0 / 4.0; // Average period
+              float period_ms = (float)(millis() - id(autotune_cycle_start));
+              float period_sec = period_ms / 1000.0 / 4.0; // average period
               float amplitude = (id(autotune_peak_high) - id(autotune_peak_low)) / 2.0;
-              
-              // Ziegler-Nichols tuning rules
-              float ku = (4.0 * id(autotune_output_high)) / (3.14159 * amplitude);
-              float tu = period_sec;
-              
-              id(kp) = 0.6 * ku;
-              id(ki) = 1.2 * ku / tu;
-              id(kd) = 0.075 * ku * tu;
-              
-              ESP_LOGI("autotune", "Autotune complete!");
-              ESP_LOGI("autotune", "Ku=%.3f, Tu=%.1fs", ku, tu);
-              ESP_LOGI("autotune", "New PID values: Kp=%.3f, Ki=%.4f, Kd=%.3f", id(kp), id(ki), id(kd));
-              
-              // Update number entities
-              id(kp_number).publish_state(id(kp));
-              id(ki_number).publish_state(id(ki));
-              id(kd_number).publish_state(id(kd));
-              
+
+              // FIX: Sanity check amplitude before dividing
+              if (amplitude > 0.5) {
+                float ku = (4.0 * id(autotune_output_high)) / (3.14159 * amplitude);
+                float tu = period_sec;
+
+                id(kp) = 0.6 * ku;
+                id(ki) = 1.2 * ku / tu;
+                id(kd) = 0.075 * ku * tu;
+
+                ESP_LOGI("autotune", "Autotune complete! Ku=%.3f, Tu=%.1fs", ku, tu);
+                ESP_LOGI("autotune", "New PID: Kp=%.3f, Ki=%.4f, Kd=%.3f", id(kp), id(ki), id(kd));
+
+                id(kp_number).publish_state(id(kp));
+                id(ki_number).publish_state(id(ki));
+                id(kd_number).publish_state(id(kd));
+              } else {
+                ESP_LOGW("autotune", "Autotune failed: amplitude %.2f°F too small — check probe and setup", amplitude);
+              }
+
               id(autotune_active) = false;
               id(integral) = 0.0;
               id(previous_error) = 0.0;
             }
-            
+
             // Timeout after 30 minutes
             if (millis() - id(autotune_cycle_start) > 1800000) {
               ESP_LOGW("autotune", "Autotune timed out after 30 minutes");
               id(autotune_active) = false;
             }
-            
+
             return;
           }
-          
-          // Normal PID mode
+
+          // ── Normal PID control ────────────────────────────────────────────
           float error = setpoint - current_temp;
-          
+
           // Proportional
           float p_term = id(kp) * error;
-          
+
           // Integral with windup protection
           id(integral) += error;
           if (id(integral) > 100.0) id(integral) = 100.0;
           if (id(integral) < -100.0) id(integral) = -100.0;
           float i_term = id(ki) * id(integral);
-          
+
           // Derivative
           float d_term = id(kd) * (error - id(previous_error));
           id(previous_error) = error;
-          
-          // Calculate output (0-100%)
+
+          // Output (0-100%)
           float output = p_term + i_term + d_term;
-          
-          // Clamp output
           if (output > 100.0) output = 100.0;
           if (output < 0.0) output = 0.0;
-          
-          // Deadband: if within ±2°F of setpoint, reduce output
+
+          // Deadband: within ±2°F of setpoint, reduce fan output by 50%
           if (error > -2.0 && error < 2.0) {
             output *= 0.5;
           }
-          
-          // Set fan PWM
+
           id(fan_pwm).set_level(output / 100.0);
           id(current_fan_duty) = output / 100.0;
 
-  # Alarm monitoring
+  # Alarm monitoring — runs every 10 seconds
   - interval: 10s
     then:
       - lambda: |-
           static uint32_t high_temp_start = 0;
           static uint32_t low_temp_start = 0;
-          
+
           if (!id(pid_enabled)) {
             high_temp_start = 0;
             low_temp_start = 0;
             return;
           }
-          
+
           float current_temp = id(pit_temp).state;
+
+          // FIX: Guard against NaN sensor reading — skip alarm check on fault
+          if (isnan(current_temp)) return;
+
           float setpoint = id(temp_setpoint_value);
           uint32_t now = millis();
-          
-          // High temperature alarm (50°F above setpoint)
+
+          // High temperature alarm (>50°F above setpoint for 3+ minutes)
           if (current_temp > setpoint + 50.0) {
             if (high_temp_start == 0) high_temp_start = now;
             else if (now - high_temp_start > 180000 && !id(high_temp_alarm_active).state) {
@@ -729,11 +896,15 @@ interval:
             }
           } else {
             high_temp_start = 0;
-            if (id(high_temp_alarm_active).state && current_temp <= setpoint + 25.0)
+            if (id(high_temp_alarm_active).state && current_temp <= setpoint + 25.0) {
               id(high_temp_alarm_active).turn_off();
+              // FIX: Reset alarm_silenced so alarm can re-trigger if condition returns
+              id(alarm_silenced) = false;
+              ESP_LOGI("alarm", "High temp alarm auto-cleared");
+            }
           }
-          
-          // Low temperature alarm (50°F below setpoint)
+
+          // Low temperature alarm (<50°F below setpoint for 3+ minutes)
           if (current_temp < setpoint - 50.0) {
             if (low_temp_start == 0) low_temp_start = now;
             else if (now - low_temp_start > 180000 && !id(low_temp_alarm_active).state) {
@@ -745,27 +916,42 @@ interval:
             }
           } else {
             low_temp_start = 0;
-            if (id(low_temp_alarm_active).state && current_temp >= setpoint - 25.0)
+            if (id(low_temp_alarm_active).state && current_temp >= setpoint - 25.0) {
               id(low_temp_alarm_active).turn_off();
+              // FIX: Reset alarm_silenced so alarm can re-trigger if condition returns
+              id(alarm_silenced) = false;
+              ESP_LOGI("alarm", "Low temp alarm auto-cleared");
+            }
           }
 
-  # Fan error detection
+  # Fan error detection — runs every 5 seconds
   - interval: 5s
     then:
       - lambda: |-
           if (!id(pid_enabled)) return;
-          
+
+          // FIX: Don't flag fan errors while chamber is intentionally open
+          if (id(lid_switch).state) return;
+
+          // Don't flag errors in manual fan mode (fan speed is intentional)
+          if (id(manual_fan_mode)) return;
+
+          float fan_amps = id(fan_current).state;
+
+          // FIX: Guard against NaN from INA219 fault (I2C error, bad wiring, etc.)
+          if (isnan(fan_amps)) return;
+
           bool fan_should_run = id(current_fan_duty) > 0.10;
-          
-          if (fan_should_run && id(fan_current).state < 0.1) {
+
+          if (fan_should_run && fan_amps < 0.1) {
             if (!id(fan_error_active).state) {
               id(fan_error_active).turn_on();
               id(alarm_silenced) = false;
               id(buzzer_switch).turn_on();
               id(alarm_beep).execute();
-              ESP_LOGW("alarm", "FAN ERROR DETECTED! Current is too low.");
+              ESP_LOGW("alarm", "FAN ERROR: Expected current but measured %.3fA", fan_amps);
             }
-          } else if (id(fan_current).state >= 0.1 && id(fan_error_active).state) {
+          } else if (fan_amps >= 0.1 && id(fan_error_active).state) {
             id(fan_error_active).turn_off();
-            ESP_LOGI("alarm", "Fan error cleared.");
+            ESP_LOGI("alarm", "Fan error cleared");
           }

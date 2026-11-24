@@ -25,7 +25,7 @@
 ### 3.3V Power (from ESP32 onboard regulator)
 | From | To | Wire Gauge | Notes |
 |------|-----|------------|-------|
-| ESP32 3V3 | MAX31855 VCC | 22 AWG 🟠 Orange | Thermocouple amp power |
+| ESP32 3V3 | MAX31865 VCC | 22 AWG 🟠 Orange | RTD amplifier power |
 | ESP32 3V3 | INA219 VCC | 22 AWG 🟠 Orange | Current sensor logic power |
 
 ⚠️ **CRITICAL**: INA219 VCC must be 3.3V (not 5V) for stable operation with ESP32
@@ -45,9 +45,9 @@
 
 ---
 
-## SPI Bus (MAX31855 Thermocouple Amplifier)
+## SPI Bus (MAX31865 Thermocouple Amplifier)
 
-| ESP32 Pin | Signal | MAX31855 Pin | Wire Color | Notes |
+| ESP32 Pin | Signal | MAX31865 Pin | Wire Color | Notes |
 |-----------|--------|--------------|------------|-------|
 | GPIO18 | SCK | CLK | 🟡 Yellow | SPI Clock |
 | GPIO19 | MISO | DO (SO) | 🟢 Green | SPI Data Out |
@@ -55,15 +55,15 @@
 | 3.3V | Power | VCC | 🟠 Orange | 3.3V power |
 | GND | Ground | GND | ⚫ Black | Ground |
 
-**Note**: MAX31855 is SPI read-only (no MOSI connection needed)
+**Note**: MAX31865 requires MOSI — add GPIO5 → MAX31865 SDI wire
 
 ### Thermocouple Connection
-| MAX31855 Terminal | Thermocouple Wire | Notes |
+| MAX31865 Terminal | Thermocouple Wire | Notes |
 |-------------------|-------------------|-------|
-| T+ / + | Positive (usually yellow) | Polarity matters! |
-| T- / - | Negative (usually red) | Reversed polarity gives negative temps |
+| RTD+ | Either probe wire | 2-wire PT1000 — no polarity |
+| RTD- | Other probe wire | No polarity — but note which wire for consistency |
 
-⚠️ **K-type thermocouple color codes vary by manufacturer - verify with multimeter**
+⚠️ **PT1000 probe: verify with multimeter (~1040-1080Ω at room temp ~21°C). No polarity.**
 
 ---
 
@@ -201,7 +201,7 @@ Use **star grounding** to minimize noise and ground loops:
            │                 │                 │
            │                 │            MOSFET Source
            │                 │                 │
-      MAX31855 GND      TM1637 #1          Fan Ground
+      MAX31865 GND      TM1637 #1          Fan Ground
            │                 │
       Encoder GND       TM1637 #2
            │                 │
@@ -233,7 +233,7 @@ Use **star grounding** to minimize noise and ground loops:
 | TM1637 #1 | 5V | 100mA | At full brightness |
 | TM1637 #2 | 5V | 100mA | At full brightness |
 | Buzzer | 5V | 30mA | When active |
-| MAX31855 | 3.3V | 2mA | From ESP32 regulator |
+| MAX31865 | 3.3V | 2mA | From ESP32 regulator |
 | INA219 | 3.3V | 1mA | From ESP32 regulator |
 | **5V Rail Total** | | **~730mA** | Use 2A buck converter for headroom |
 | **Fan (12V)** | 12V | 1-3A | Depends on fan model and duty cycle |
@@ -255,7 +255,7 @@ Use **star grounding** to minimize noise and ground loops:
 1. **Use ferrules on stranded wire** - Prevents fraying in screw terminals
 2. **Twist thermocouple wires together** - Reduces EMI pickup
 3. **Separate power and signal wires** - Avoid parallel runs > 6 inches
-4. **Keep SPI wires short** - MAX31855 is sensitive to capacitance
+4. **Keep SPI wires short** - MAX31865 is sensitive to capacitance
 5. **Label everything** - Use label maker or masking tape
 6. **Use heat shrink** - Cover all solder joints and connections
 7. **Strain relief** - Secure wires near connectors
@@ -343,11 +343,12 @@ Before applying power for the first time:
 |------|----------|-----------|-----------|-------|
 | 4 | Output | Buzzer | OUT | Active-high control |
 | 13 | Input | Door Switch | IN | INPUT_PULLUP enabled |
-| 14 | SPI | MAX31855 CS | OUT | Chip select (active low) |
+| 14 | SPI | MAX31865 CS | OUT | Chip select (active low) |
 | 16 | PWM | Fan Control | OUT | 25kHz PWM signal |
 | 17 | I2C | SCL (INA219) | OUT | Clock line |
-| 18 | SPI | MAX31855 CLK | OUT | SPI clock |
-| 19 | SPI | MAX31855 MISO | IN | SPI data in |
+| 18 | SPI | MAX31865 CLK | OUT | SPI clock |
+| 5  | SPI | MAX31865 MOSI | OUT | SPI data out (required for MAX31865) |
+| 19 | SPI | MAX31865 MISO | IN | SPI data in |
 | 21 | I2C | SDA (INA219) | I/O | Data line |
 | 22 | Output | TM1637 #2 DIO | I/O | Setpoint display data |
 | 23 | Output | TM1637 #1 CLK | OUT | Current temp clock |
@@ -358,7 +359,8 @@ Before applying power for the first time:
 | 33 | Input | Encoder Phase B | IN | INPUT_PULLUP enabled |
 
 **Unused Pins Available for Expansion:**
-- GPIO 5, 12, 15, 34, 35, 36, 39 (input only)
+- GPIO 12, 15, 34, 35, 36, 39 (input only)
+- GPIO5 now used: MAX31865 MOSI
 
 ---
 
@@ -367,12 +369,12 @@ Before applying power for the first time:
 To add meat temperature monitoring (future expansion):
 
 ### Additional Hardware Needed
-- MAX31855 module (second unit)
+- MAX31865 module (second unit)
 - K-type food-grade thermocouple probe
 - 3 additional wires
 
 ### Wiring
-| ESP32 Pin | MAX31855 #2 |
+| ESP32 Pin | MAX31865 #2 |
 |-----------|-------------|
 | GPIO18 | CLK (shared) |
 | GPIO19 | MISO (shared) |

@@ -17,8 +17,8 @@ This project is my solution: an ESP32-based controller with PID control, web int
 ### Core Requirements
 - **Standalone operation** - Works without internet or Home Assistant
 - **PID temperature control** - Maintains setpoint within ±2°F using proper PID algorithm
-- **K-type thermocouple** - Reads chamber temp using OEM probe via MAX31855
-- **Door safety interlocks** - Fan stops when doors open, with manual override option
+- **PT1000 RTD sensor** - Reads chamber temp using OEM probe (Part #801126) via MAX31865
+- **Door safety interlocks** - Fan pauses when hopper doors open, with manual toggle option
 - **Dual LED displays** - Always visible current temp and setpoint (outdoor-bright TM1637)
 - **Physical rotary encoder** - Adjust setpoint without phone/computer
 - **One-button control** - Encoder button for alarm silence and setpoint confirmation
@@ -49,14 +49,14 @@ This project is my solution: an ESP32-based controller with PID control, web int
 | Component | Purpose | Interface |
 |-----------|---------|-----------|
 | ESP32-WROOM-32U | Main controller | WiFi with external antenna |
-| MAX31855 | Thermocouple amplifier | SPI (GPIO 18, 19, 14) |
+| MAX31865 | RTD amplifier (PT1000) | SPI (GPIO 18, 19, 5, 14) |
 | INA219 | Current sensor | I2C (GPIO 21, 17) |
 | 2x TM1637 | 4-digit LED displays | GPIO 23/26 and 25/22 |
 | KY-040 | Rotary encoder with button | GPIO 32, 33, 27 |
 | IRLZ34N MOSFET | Fan PWM driver | GPIO 16 |
 | LM2596 Buck | 12V→5V converter | Power supply |
 | Active Buzzer | Alert system | GPIO 4 |
-| Door Switch | Safety interlock | GPIO 13 |
+| Door / Hopper Interlock | Safety interlock | GPIO 13 |
 
 **See [BOM.md](BOM.md) for complete parts list with specs and sourcing.**
 
@@ -107,13 +107,14 @@ This project is my solution: an ESP32-based controller with PID control, web int
 - Use "Silence Alarm" button in web interface
 - Disable all alarms via "Alarm Enabled" switch
 
-### Door Safety
-**Normal Mode:**
-- Door opens → Fan stops immediately, display shows `oPEn` / `door`
-- Door closes → Fan resumes automatically
+### Door Safety & Hopper Interlocks
+The Char-Griller 980 features two safety switches on the charcoal hopper: the **upper hopper lid** (fuel filling) and the **lower ash door** (ash cleanout & lighting). The cooking chamber lid has no switch.
 
-**Future Enhancement:**
-- Door override feature planned for extended door-open operations
+- **Stock Harness Compatibility**: The factory wire harness has both hopper switches wired in a closed-loop series circuit leading to a single 2-pin connector. Plugging this connector into GPIO13 and GND supports the factory behavior natively:
+  - Opening **either** door breaks the circuit → Fan stops immediately, display shows `oPEn` / `door`, and PID integral accumulator is zeroed to prevent windup.
+  - Closing both doors restores the circuit → Fan and PID control resume smoothly.
+- **Manual Toggle Option**: If the factory switches have failed or been bypassed, wire a simple SPST toggle switch between GPIO13 and GND. Flipping the toggle to open pauses the fan whenever you need to open the hopper without blowing ash or fueling a hopper fire.
+- **Manual Fan Override**: Available from the web UI to manually command fan speed (0–100%) for fire startup or cleaning.
 
 ### Web Interface Features
 **Main Controls (sorted by priority):**

@@ -105,7 +105,7 @@ This is a complete parts list for building an ESP32-based controller replacement
 
 These parts are reused from your existing CharGriller 980:
 - **Fan** - 12V axial fan (current draw: typically 1-3A)
-- **Chamber access toggle switch** - SPST toggle wired to GPIO13 (replaces OEM NC pressure switch which is bypassed)
+- **Hopper door switch harness** - Stock 2-wire harness (upper hopper lid + lower ash door switches wired in series); alternatively, an SPST toggle switch wired to GPIO13 if OEM switches are bypassed or worn out
 - **Temperature probe** - OEM pit probe Part #801126 (PT1000 RTD, 2-wire Molex-style connector) — reused directly with MAX31865
 - **Grill body** - Metal frame for magnetic mounting
 

@@ -111,18 +111,25 @@
 
 ---
 
-## Door/Lid Switch
+## Door / Hopper Safety Switches (Stock Harness or Manual Toggle)
 
 | ESP32 Pin | Signal | Switch Terminal | Wire Color | Notes |
 |-----------|--------|-----------------|------------|-------|
-| GPIO13 | Input | Terminal 1 | 🟡 Yellow | Signal input |
-| GND | Ground | Terminal 2 | ⚫ Black | Ground |
+| GPIO13 | Input | Terminal 1 | 🟡 Yellow | Signal input (with internal pull-up) |
+| GND | Ground | Terminal 2 | ⚫ Black | Ground return |
 
-**Switch Type**: Normally Open (NO)
-- **Door closed**: Switch open → GPIO13 pulled HIGH (internal pull-up)
-- **Door open**: Switch closes → GPIO13 pulled LOW
+### How the Stock Char-Griller 980 System Works:
+The factory Char-Griller 980 wiring harness has **two microswitches** (upper hopper lid for fueling, and lower hopper door for ash/lighting) **already wired in series into a single 2-pin connector**:
+- **Both doors closed**: Both switches are depressed/closed → Circuit completed to GND → GPIO13 is pulled **LOW** (`OFF` / Normal run).
+- **Either door opened**: Circuit is broken (open loop) → GPIO13 is pulled **HIGH** by internal pull-up (`ON` / Fan paused / Display shows `oPEn` / `door`).
 
-⚠️ **Your OEM switch may be Normally Closed (NC) - verify with multimeter and adjust config if needed**
+### Option 1: Plug-and-Play with Factory Harness
+Connect the factory 2-pin door switch harness connector directly between **GPIO13** and **GND**. No changes to the factory wiring required!
+
+### Option 2: Manual SPST Toggle Switch (if OEM switches are broken or bypassed)
+Wire a simple ON/OFF toggle switch between **GPIO13** and **GND**:
+- **Switch ON / Closed** (shorted to GND) = "Doors Closed / Run"
+- **Switch OFF / Open** (disconnected) = "Chamber Open / Fan Paused"
 
 ---
 

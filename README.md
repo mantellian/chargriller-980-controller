@@ -64,6 +64,11 @@ This project is my solution: an ESP32-based controller with PID control, web int
 
 **See [WIRING_DIAGRAM.md](WIRING_DIAGRAM.md) for visual schematic flowcharts and circuit diagrams.**
 
+**See [PCB_DESIGN.md](PCB_DESIGN.md) for custom PCB engineering specifications and layout.**
+
+> [!TIP]
+> **Interactive In-Browser KiCad Viewer**: You can view, pan, and inspect the schematic and PCB files directly in your web browser via **[KiCanvas](https://kicanvas.org/?github=mantellian/chargriller-980-controller)** without needing KiCad installed!
+
 ---
 
 ## Features Breakdown

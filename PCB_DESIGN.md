@@ -41,6 +41,11 @@ Located along the bottom edge of the board. Uses a **pluggable terminal block** 
 
 ## 3. Physical Layout & Ergonomics (Replicating OEM Faceplate)
 
+![PCB Layout Preview](KiCad/pcb_preview.svg)
+
+> [!TIP]
+> **Interactive In-Browser Viewer**: You can also view and pan/zoom the KiCad schematic and PCB directly in your browser without installing KiCad using **[KiCanvas](https://kicanvas.org/?github=mantellian/chargriller-980-controller)**!
+
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │  [M3 / Magnet]                                          [M3 / Magnet]  │

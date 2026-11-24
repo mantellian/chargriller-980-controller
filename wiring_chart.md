@@ -2,6 +2,9 @@
 
 **IMPORTANT: Read completely before wiring. Double-check all connections before applying power.**
 
+> [!TIP]
+> For visual schematics, power flowcharts, and circuit diagrams, see **[WIRING_DIAGRAM.md](WIRING_DIAGRAM.md)**.
+
 ---
 
 ## Power Distribution

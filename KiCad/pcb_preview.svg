@@ -1,85 +1,248 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 550" width="760" height="550">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 655" width="900" height="655">
   <defs>
     <style>
-      .pcb-board { fill: #0b3d16; stroke: #1e5e2e; stroke-width: 2; }
-      .silk-text { font-family: "Courier New", monospace; font-size: 13px; font-weight: bold; fill: #ffffff; }
-      .silk-title { font-family: "Courier New", monospace; font-size: 16px; font-weight: bold; fill: #f0f0f0; text-anchor: middle; }
-      .component { fill: #1c1c1c; stroke: #888888; stroke-width: 1.5; rx: 4; }
-      .display { fill: #0a0a0a; stroke: #d32f2f; stroke-width: 2; rx: 3; }
-      .disp-text { font-family: "Segment7, Courier New", monospace; font-size: 28px; font-weight: bold; fill: #ff1744; text-anchor: middle; }
-      .knob { fill: #2c2c2c; stroke: #d4af37; stroke-width: 3; }
-      .mount-hole { fill: #1a1a1a; stroke: #d4af37; stroke-width: 3; }
-      .connector { fill: #1b5e20; stroke: #81c784; stroke-width: 2; rx: 3; }
-      .pin { fill: #ffd54f; stroke: #b78103; stroke-width: 1; }
-      .label { font-family: sans-serif; font-size: 11px; fill: #cccccc; text-anchor: middle; }
+      .pcb-fr4 { fill: #0d421d; stroke: #1b5e20; stroke-width: 2; }
+      .copper-top { stroke: #c67d0a; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+      .copper-bot { stroke: #1976d2; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.6; }
+      .pad-thru { fill: #fbc02d; stroke: #b78103; stroke-width: 1; }
+      .pad-hole { fill: #0d421d; }
+      .silk-line { stroke: #ffffff; stroke-width: 1.2; fill: none; }
+      .silk-text { font-family: "Courier New", monospace; font-size: 10px; font-weight: bold; fill: #ffffff; }
+      .silk-sub { font-family: "Courier New", monospace; font-size: 8px; fill: #d0d0d0; }
+      .silk-title { font-family: "Courier New", monospace; font-size: 13px; font-weight: bold; fill: #ffffff; text-anchor: middle; }
+      .magnet-zone { stroke: #ffeb3b; stroke-width: 1.5; stroke-dasharray: 4,3; fill: none; }
+      .hole-cut { fill: #111111; stroke: #c67d0a; stroke-width: 2; }
     </style>
   </defs>
 
-  <!-- PCB Board Base -->
-  <rect x="20" y="20" width="720.0" height="510.0" rx="18" class="pcb-board" />
+  <!-- Dark Green FR4 PCB Substrate -->
+  <rect x="30" y="30" width="840.0" height="595.0" rx="18" class="pcb-fr4" />
 
-  <!-- 4 Corner Mounting Holes (M3 + Magnet Ring) -->
-  <circle cx="50.0" cy="50.0" r="30.0" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-dasharray="4,2" />
-  <circle cx="50.0" cy="50.0" r="9.600000000000001" class="mount-hole" />
+  <!-- Ground Plane Stippling / Pattern Effect -->
+  <rect x="37.0" y="37.0" width="826.0" height="581.0" rx="16" fill="none" stroke="#125827" stroke-width="1.5" />
 
-  <circle cx="710.0" cy="50.0" r="30.0" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-dasharray="4,2" />
-  <circle cx="710.0" cy="50.0" r="9.600000000000001" class="mount-hole" />
+  <!-- 4 Corner Mounting Holes (M3 np-thru-hole + 10mm Neodymium Magnet Ring) -->
+  <!-- Top-Left -->
+  <circle cx="72.0" cy="72.0" r="35.0" class="magnet-zone" />
+  <circle cx="72.0" cy="72.0" r="11.200000000000001" class="hole-cut" />
+  <!-- Top-Right -->
+  <circle cx="828.0" cy="72.0" r="35.0" class="magnet-zone" />
+  <circle cx="828.0" cy="72.0" r="11.200000000000001" class="hole-cut" />
+  <!-- Bottom-Left -->
+  <circle cx="72.0" cy="583.0" r="35.0" class="magnet-zone" />
+  <circle cx="72.0" cy="583.0" r="11.200000000000001" class="hole-cut" />
+  <!-- Bottom-Right -->
+  <circle cx="828.0" cy="583.0" r="35.0" class="magnet-zone" />
+  <circle cx="828.0" cy="583.0" r="11.200000000000001" class="hole-cut" />
 
-  <circle cx="50.0" cy="500.0" r="30.0" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-dasharray="4,2" />
-  <circle cx="50.0" cy="500.0" r="9.600000000000001" class="mount-hole" />
+  <!-- Silkscreen Title -->
+  <text x="450.0" y="61.5" class="silk-title">CHAR-GRILLER 980 MOTHERBOARD CARRIER v0.3</text>
 
-  <circle cx="710.0" cy="500.0" r="30.0" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-dasharray="4,2" />
-  <circle cx="710.0" cy="500.0" r="9.600000000000001" class="mount-hole" />
+  <!-- ==================== COMPONENT FOOTPRINTS ==================== -->
 
-  <!-- Board Title Silkscreen -->
-  <text x="380.0" y="50" class="silk-title">CHAR-GRILLER 980 DIY CONTROLLER v0.3</text>
+  <!-- 1. KY-040 ROTARY ENCODER FOOTPRINT (LEFT SIDE) -->
+  <g id="U3_ENCODER">
+    <!-- Component Body Outline -->
+    <rect x="114.0" y="114.0" width="105.0" height="105.0" class="silk-line" />
+    <circle cx="166.5" cy="166.5" r="24.5" class="hole-cut" />
+    <text x="166.5" y="103.5" class="silk-text" text-anchor="middle">U3: KY-040</text>
+    <text x="166.5" y="236.5" class="silk-sub" text-anchor="middle">DIAL ENCODER</text>
 
-  <!-- FRONT PANEL SECTION -->
-
-  <!-- Left Side: KY-040 Rotary Encoder Knob -->
-  <rect x="92.0" y="92.0" width="192.0" height="192.0" class="component" />
-  <circle cx="188.0" cy="188.0" r="78.0" class="knob" />
-  <line x1="188.0" y1="188.0" x2="188.0" y2="122.0" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
-  <text x="188.0" y="308.0" class="silk-title" font-size="12">ENCODER / DIAL</text>
-  <text x="188.0" y="332.0" class="label">(Push to Confirm/Silence)</text>
-
-  <!-- Right Side: Dual TM1637 Displays (Stacked) -->
-  <!-- Top Display: Current Pit Temp -->
-  <rect x="332.0" y="80.0" width="336.0" height="120.0" class="display" />
-  <text x="500.0" y="164.0" class="disp-text">225 °F</text>
-  <text x="500.0" y="74.0" class="silk-text" text-anchor="middle">CURRENT PIT TEMP</text>
-
-  <!-- Bottom Display: Target Setpoint -->
-  <rect x="332.0" y="224.0" width="336.0" height="120.0" class="display" />
-  <text x="500.0" y="308.0" class="disp-text">225 °F</text>
-  <text x="500.0" y="218.0" class="silk-text" text-anchor="middle">TARGET SETPOINT</text>
-
-  <!-- BOTTOM SECTION: Industrial Quick-Disconnect Harness -->
-  <rect x="140.0" y="410.0" width="480.0" height="84.0" class="connector" />
-  <text x="380.0" y="392.0" class="silk-text" text-anchor="middle">QUICK-DISCONNECT WIRE HARNESS (5.08mm)</text>
-
-    <rect x="160.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="168.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">12V+</text>
+    <circle cx="122.89" cy="219.0" r="6.3" class="pad-thru" />
+    <circle cx="122.89" cy="219.0" r="3.15" class="pad-hole" />
     
-    <rect x="217.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="225.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">GND</text>
+    <circle cx="140.67" cy="219.0" r="6.3" class="pad-thru" />
+    <circle cx="140.67" cy="219.0" r="3.15" class="pad-hole" />
     
-    <rect x="274.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="282.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">FAN+</text>
+    <circle cx="158.45" cy="219.0" r="6.3" class="pad-thru" />
+    <circle cx="158.45" cy="219.0" r="3.15" class="pad-hole" />
     
-    <rect x="331.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="339.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">FAN-</text>
+    <circle cx="176.23000000000002" cy="219.0" r="6.3" class="pad-thru" />
+    <circle cx="176.23000000000002" cy="219.0" r="3.15" class="pad-hole" />
     
-    <rect x="388.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="396.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">DOOR</text>
+    <circle cx="194.01" cy="219.0" r="6.3" class="pad-thru" />
+    <circle cx="194.01" cy="219.0" r="3.15" class="pad-hole" />
     
-    <rect x="445.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="453.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">DGND</text>
+  <!-- 2. TM1637 DISPLAY HEADERS (RIGHT SIDE) -->
+  <!-- Display #1 (Current Temp) -->
+  <g id="DISP1_HEADER">
+    <rect x="345.0" y="93.0" width="224.0" height="126.0" class="silk-line" stroke-dasharray="3,2" />
+    <text x="457.0" y="142.0" class="silk-text" text-anchor="middle">DISP1: CURRENT TEMP</text>
+    <text x="457.0" y="184.0" class="silk-sub" text-anchor="middle">TM1637 0.56" RED</text>
+    <!-- 4-Pin Header -->
+    <rect x="366.0" y="198.0" width="70.0" height="17.78" class="silk-line" />
+<circle cx="373.0" cy="206.89" r="6.3" class="pad-thru" /><circle cx="373.0" cy="206.89" r="3.15" class="pad-hole" /><circle cx="390.78" cy="206.89" r="6.3" class="pad-thru" /><circle cx="390.78" cy="206.89" r="3.15" class="pad-hole" /><circle cx="408.56" cy="206.89" r="6.3" class="pad-thru" /><circle cx="408.56" cy="206.89" r="3.15" class="pad-hole" /><circle cx="426.34" cy="206.89" r="6.3" class="pad-thru" /><circle cx="426.34" cy="206.89" r="3.15" class="pad-hole" />
+  </g>
+
+  <!-- Display #2 (Target Setpoint) -->
+  <g id="DISP2_HEADER">
+    <rect x="604.0" y="93.0" width="224.0" height="126.0" class="silk-line" stroke-dasharray="3,2" />
+    <text x="716.0" y="142.0" class="silk-text" text-anchor="middle">DISP2: SETPOINT</text>
+    <text x="716.0" y="184.0" class="silk-sub" text-anchor="middle">TM1637 0.56" RED</text>
+    <!-- 4-Pin Header -->
+    <rect x="625.0" y="198.0" width="70.0" height="17.78" class="silk-line" />
+<circle cx="632.0" cy="206.89" r="6.3" class="pad-thru" /><circle cx="632.0" cy="206.89" r="3.15" class="pad-hole" /><circle cx="649.7800000000001" cy="206.89" r="6.3" class="pad-thru" /><circle cx="649.7800000000001" cy="206.89" r="3.15" class="pad-hole" /><circle cx="667.56" cy="206.89" r="6.3" class="pad-thru" /><circle cx="667.56" cy="206.89" r="3.15" class="pad-hole" /><circle cx="685.34" cy="206.89" r="6.3" class="pad-thru" /><circle cx="685.34" cy="206.89" r="3.15" class="pad-hole" />
+  </g>
+
+  <!-- 3. ESP32-DEVKITC-32U DUAL SOCKET HEADERS (CENTER) -->
+  <g id="U1_ESP32">
+    <!-- Module Silk Outline -->
+    <rect x="310.0" y="261.0" width="364.0" height="196.0" class="silk-line" />
+    <!-- ESP32 Metal Can and U.FL antenna notch -->
+    <rect x="331.0" y="282.0" width="126.0" height="112.0" stroke="#aaaaaa" stroke-width="1" fill="#222222" />
+    <circle cx="345.0" cy="296.0" r="8.4" fill="#ffd54f" stroke="#000" />
+    <text x="394.0" y="345.0" font-family="sans-serif" font-size="8" fill="#cccccc" text-anchor="middle">ESP32-32U</text>
+    <text x="492.0" y="366.0" class="silk-title" font-size="11">U1: ESP32-DEVKITC-32U</text>
+<circle cx="324.0" cy="271.5" r="5.95" class="pad-thru" /><circle cx="324.0" cy="271.5" r="3.15" class="pad-hole" /><circle cx="324.0" cy="446.5" r="5.95" class="pad-thru" /><circle cx="324.0" cy="446.5" r="3.15" class="pad-hole" /><circle cx="341.78" cy="271.5" r="5.95" class="pad-thru" /><circle cx="341.78" cy="271.5" r="3.15" class="pad-hole" /><circle cx="341.78" cy="446.5" r="5.95" class="pad-thru" /><circle cx="341.78" cy="446.5" r="3.15" class="pad-hole" /><circle cx="359.56" cy="271.5" r="5.95" class="pad-thru" /><circle cx="359.56" cy="271.5" r="3.15" class="pad-hole" /><circle cx="359.56" cy="446.5" r="5.95" class="pad-thru" /><circle cx="359.56" cy="446.5" r="3.15" class="pad-hole" /><circle cx="377.34" cy="271.5" r="5.95" class="pad-thru" /><circle cx="377.34" cy="271.5" r="3.15" class="pad-hole" /><circle cx="377.34" cy="446.5" r="5.95" class="pad-thru" /><circle cx="377.34" cy="446.5" r="3.15" class="pad-hole" /><circle cx="395.12" cy="271.5" r="5.95" class="pad-thru" /><circle cx="395.12" cy="271.5" r="3.15" class="pad-hole" /><circle cx="395.12" cy="446.5" r="5.95" class="pad-thru" /><circle cx="395.12" cy="446.5" r="3.15" class="pad-hole" /><circle cx="412.90000000000003" cy="271.5" r="5.95" class="pad-thru" /><circle cx="412.90000000000003" cy="271.5" r="3.15" class="pad-hole" /><circle cx="412.90000000000003" cy="446.5" r="5.95" class="pad-thru" /><circle cx="412.90000000000003" cy="446.5" r="3.15" class="pad-hole" /><circle cx="430.68" cy="271.5" r="5.95" class="pad-thru" /><circle cx="430.68" cy="271.5" r="3.15" class="pad-hole" /><circle cx="430.68" cy="446.5" r="5.95" class="pad-thru" /><circle cx="430.68" cy="446.5" r="3.15" class="pad-hole" /><circle cx="448.46000000000004" cy="271.5" r="5.95" class="pad-thru" /><circle cx="448.46000000000004" cy="271.5" r="3.15" class="pad-hole" /><circle cx="448.46000000000004" cy="446.5" r="5.95" class="pad-thru" /><circle cx="448.46000000000004" cy="446.5" r="3.15" class="pad-hole" /><circle cx="466.24" cy="271.5" r="5.95" class="pad-thru" /><circle cx="466.24" cy="271.5" r="3.15" class="pad-hole" /><circle cx="466.24" cy="446.5" r="5.95" class="pad-thru" /><circle cx="466.24" cy="446.5" r="3.15" class="pad-hole" /><circle cx="484.02" cy="271.5" r="5.95" class="pad-thru" /><circle cx="484.02" cy="271.5" r="3.15" class="pad-hole" /><circle cx="484.02" cy="446.5" r="5.95" class="pad-thru" /><circle cx="484.02" cy="446.5" r="3.15" class="pad-hole" /><circle cx="501.80000000000007" cy="271.5" r="5.95" class="pad-thru" /><circle cx="501.80000000000007" cy="271.5" r="3.15" class="pad-hole" /><circle cx="501.80000000000007" cy="446.5" r="5.95" class="pad-thru" /><circle cx="501.80000000000007" cy="446.5" r="3.15" class="pad-hole" /><circle cx="519.5799999999999" cy="271.5" r="5.95" class="pad-thru" /><circle cx="519.5799999999999" cy="271.5" r="3.15" class="pad-hole" /><circle cx="519.5799999999999" cy="446.5" r="5.95" class="pad-thru" /><circle cx="519.5799999999999" cy="446.5" r="3.15" class="pad-hole" /><circle cx="537.36" cy="271.5" r="5.95" class="pad-thru" /><circle cx="537.36" cy="271.5" r="3.15" class="pad-hole" /><circle cx="537.36" cy="446.5" r="5.95" class="pad-thru" /><circle cx="537.36" cy="446.5" r="3.15" class="pad-hole" /><circle cx="555.1400000000001" cy="271.5" r="5.95" class="pad-thru" /><circle cx="555.1400000000001" cy="271.5" r="3.15" class="pad-hole" /><circle cx="555.1400000000001" cy="446.5" r="5.95" class="pad-thru" /><circle cx="555.1400000000001" cy="446.5" r="3.15" class="pad-hole" /><circle cx="572.9200000000001" cy="271.5" r="5.95" class="pad-thru" /><circle cx="572.9200000000001" cy="271.5" r="3.15" class="pad-hole" /><circle cx="572.9200000000001" cy="446.5" r="5.95" class="pad-thru" /><circle cx="572.9200000000001" cy="446.5" r="3.15" class="pad-hole" /><circle cx="590.6999999999999" cy="271.5" r="5.95" class="pad-thru" /><circle cx="590.6999999999999" cy="271.5" r="3.15" class="pad-hole" /><circle cx="590.6999999999999" cy="446.5" r="5.95" class="pad-thru" /><circle cx="590.6999999999999" cy="446.5" r="3.15" class="pad-hole" /><circle cx="608.48" cy="271.5" r="5.95" class="pad-thru" /><circle cx="608.48" cy="271.5" r="3.15" class="pad-hole" /><circle cx="608.48" cy="446.5" r="5.95" class="pad-thru" /><circle cx="608.48" cy="446.5" r="3.15" class="pad-hole" /><circle cx="626.26" cy="271.5" r="5.95" class="pad-thru" /><circle cx="626.26" cy="271.5" r="3.15" class="pad-hole" /><circle cx="626.26" cy="446.5" r="5.95" class="pad-thru" /><circle cx="626.26" cy="446.5" r="3.15" class="pad-hole" /><circle cx="644.04" cy="271.5" r="5.95" class="pad-thru" /><circle cx="644.04" cy="271.5" r="3.15" class="pad-hole" /><circle cx="644.04" cy="446.5" r="5.95" class="pad-thru" /><circle cx="644.04" cy="446.5" r="3.15" class="pad-hole" />
+  </g>
+
+  <!-- 4. MAX31865 RTD AMPLIFIER SOCKET (LEFT-CENTER) -->
+  <g id="J1_MAX31865">
+    <rect x="114.0" y="261.0" width="168.0" height="154.0" class="silk-line" />
+    <text x="198.0" y="289.0" class="silk-text" text-anchor="middle">J1: MAX31865</text>
+    <text x="198.0" y="317.0" class="silk-sub" text-anchor="middle">PT1000 RTD AMP</text>
+    <!-- 8-pin Header on MAX31865 module -->
+    <rect x="121.0" y="338.0" width="154.0" height="17.78" class="silk-line" />
+<circle cx="129.89" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="129.89" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="147.67" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="147.67" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="165.45000000000002" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="165.45000000000002" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="183.23000000000002" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="183.23000000000002" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="201.01" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="201.01" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="218.79" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="218.79" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="236.57" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="236.57" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" /><circle cx="254.34999999999997" cy="346.89000000000004" r="5.6000000000000005" class="pad-thru" /><circle cx="254.34999999999997" cy="346.89000000000004" r="2.8000000000000003" class="pad-hole" />
+    <!-- 2-pin probe screw terminal on module -->
+    <rect x="135.0" y="380.0" width="42.0" height="21.0" class="pad-thru" />
+    <text x="212.0" y="397.5" class="silk-sub">RTD+/RTD-</text>
+  </g>
+
+  <!-- 5. INA219 CURRENT SENSOR (TOP-CENTER) -->
+  <g id="U2_INA219">
+    <rect x="702.0" y="261.0" width="126.0" height="112.0" class="silk-line" />
+    <text x="765.0" y="289.0" class="silk-text" text-anchor="middle">U2: INA219</text>
+    <text x="765.0" y="317.0" class="silk-sub" text-anchor="middle">FAN CURRENT</text>
+    <!-- 6-Pin Header -->
+<circle cx="716.0" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="716.0" cy="348.5" r="2.8000000000000003" class="pad-hole" /><circle cx="733.7800000000001" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="733.7800000000001" cy="348.5" r="2.8000000000000003" class="pad-hole" /><circle cx="751.56" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="751.56" cy="348.5" r="2.8000000000000003" class="pad-hole" /><circle cx="769.34" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="769.34" cy="348.5" r="2.8000000000000003" class="pad-hole" /><circle cx="787.12" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="787.12" cy="348.5" r="2.8000000000000003" class="pad-hole" /><circle cx="804.9" cy="348.5" r="5.6000000000000005" class="pad-thru" /><circle cx="804.9" cy="348.5" r="2.8000000000000003" class="pad-hole" />
+  </g>
+
+  <!-- 6. LM2596 BUCK CONVERTER MODULE (BOTTOM RIGHT) -->
+  <g id="U5_BUCK">
+    <rect x="646.0" y="394.0" width="182.0" height="126.0" class="silk-line" />
+    <text x="737.0" y="422.0" class="silk-text" text-anchor="middle">U5: LM2596</text>
+    <text x="737.0" y="450.0" class="silk-sub" text-anchor="middle">12V -> 5V BUCK</text>
+    <!-- IN+, IN-, OUT+, OUT- terminals -->
+    <circle cx="660.0" cy="492.0" r="8.4" class="pad-thru" />
+    <circle cx="660.0" cy="492.0" r="4.2" class="pad-hole" />
+    <text x="660.0" y="478.0" class="silk-sub" text-anchor="middle">IN+</text>
+
+    <circle cx="660.0" cy="457.0" r="8.4" class="pad-thru" />
+    <circle cx="660.0" cy="457.0" r="4.2" class="pad-hole" />
+    <text x="660.0" y="443.0" class="silk-sub" text-anchor="middle">IN-</text>
+
+    <circle cx="814.0" cy="492.0" r="8.4" class="pad-thru" />
+    <circle cx="814.0" cy="492.0" r="4.2" class="pad-hole" />
+    <text x="814.0" y="478.0" class="silk-sub" text-anchor="middle">OUT+</text>
+
+    <circle cx="814.0" cy="457.0" r="8.4" class="pad-thru" />
+    <circle cx="814.0" cy="457.0" r="4.2" class="pad-hole" />
+    <text x="814.0" y="443.0" class="silk-sub" text-anchor="middle">OUT-</text>
+  </g>
+
+  <!-- 7. FAN MOSFET (IRLZ34N) & PROTECTION -->
+  <g id="Q2_MOSFET">
+    <rect x="114.0" y="436.0" width="70.0" height="35.0" class="silk-line" />
+    <text x="149.0" y="422.0" class="silk-text" text-anchor="middle">Q2: IRLZ34N</text>
+    <!-- G D S Pins -->
+    <circle cx="128.0" cy="450.0" r="6.3" class="pad-thru" />
+    <circle cx="128.0" cy="450.0" r="3.15" class="pad-hole" />
+    <circle cx="149.0" cy="450.0" r="6.3" class="pad-thru" />
+    <circle cx="149.0" cy="450.0" r="3.15" class="pad-hole" />
+    <circle cx="170.0" cy="450.0" r="6.3" class="pad-thru" />
+    <circle cx="170.0" cy="450.0" r="3.15" class="pad-hole" />
+    <!-- Flyback Diode D1 -->
+    <rect x="198.0" y="436.0" width="42.0" height="21.0" class="silk-line" />
+    <text x="219.0" y="422.0" class="silk-sub" text-anchor="middle">D1: 1N4007</text>
+    <circle cx="201.5" cy="446.5" r="4.8999999999999995" class="pad-thru" />
+    <circle cx="236.5" cy="446.5" r="4.8999999999999995" class="pad-thru" />
+  </g>
+
+  <!-- 8. ACTIVE BUZZER -->
+  <g id="BZ1_BUZZER">
+    <circle cx="268.0" cy="464.0" r="31.5" class="silk-line" />
+    <text x="268.0" y="422.0" class="silk-sub" text-anchor="middle">BZ1 (+)</text>
+    <circle cx="254.0" cy="464.0" r="5.6000000000000005" class="pad-thru" />
+    <circle cx="282.0" cy="464.0" r="5.6000000000000005" class="pad-thru" />
+  </g>
+
+  <!-- 9. INDUSTRIAL 8-PIN QUICK-DISCONNECT TERMINAL (BOTTOM) -->
+  <g id="J_HARNESS">
+    <rect x="170.0" y="534.0" width="560.0" height="70.0" stroke="#ffffff" stroke-width="1.8" fill="#1b5e20" rx="3" />
+    <text x="450.0" y="520.0" class="silk-title" font-size="11">J_HARNESS: 8-PIN PLUGGABLE QUICK DISCONNECT (5.08mm)</text>
+
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="187.5" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="198.0" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="198.0" y="618.0" class="silk-sub" text-anchor="middle">1: 12V+</text>
     
-    <rect x="502.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="510.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">RTD+</text>
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="254.0" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="264.5" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="264.5" y="618.0" class="silk-sub" text-anchor="middle">2: GND</text>
     
-    <rect x="559.0" y="440.0" width="16" height="16" rx="2" class="pin" />
-    <text x="567.0" y="466.0" font-family="monospace" font-size="9" fill="#e0e0e0" font-weight="bold" text-anchor="middle">RTD-</text>
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="320.5" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="331.0" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="331.0" y="618.0" class="silk-sub" text-anchor="middle">3: FAN+</text>
     
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="387.0" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="397.5" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="397.5" y="618.0" class="silk-sub" text-anchor="middle">4: FAN-</text>
+    
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="453.5" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="464.0" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="464.0" y="618.0" class="silk-sub" text-anchor="middle">5: DOOR</text>
+    
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="520.0" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="530.5" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="530.5" y="618.0" class="silk-sub" text-anchor="middle">6: DGND</text>
+    
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="586.5" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="597.0" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="597.0" y="618.0" class="silk-sub" text-anchor="middle">7: RTD+</text>
+    
+    <!-- Solder pad with heavy annular ring -->
+    <rect x="653.0" y="556.4" width="21.0" height="25.2" rx="2" class="pad-thru" />
+    <circle cx="663.5" cy="569.0" r="4.8999999999999995" class="pad-hole" />
+    <!-- Pin callout text on PCB silkscreen -->
+    <text x="663.5" y="618.0" class="silk-sub" text-anchor="middle">8: RTD-</text>
+    
+  <!-- High Current 12V and GND Power Traces (2.54mm / 100 mil) -->
+  <path d="M 198.0 555.0 L 198.0 499.0 L 660.0 492.0" class="copper-top" stroke-width="4" />
+  <path d="M 264.5 555.0 L 264.5 492.0 L 660.0 457.0" class="copper-bot" stroke-width="4" />
+
+  <!-- Fan PWM High-Current Trace from Pin 4 to MOSFET Drain -->
+  <path d="M 397.5 555.0 L 397.5 478.0 L 149.0 478.0 L 149.0 450.0" class="copper-top" stroke-width="4" />
+
+  <!-- SPI MOSI (GPIO5 -> MAX31865 Pin 8) -->
+  <path d="M 501.80000000000007 446.5 L 501.80000000000007 471.0 L 254.0 471.0 L 254.0 346.89000000000004" class="copper-top" stroke-width="1.8" />
+
+  <!-- SPI MISO, CLK, CS traces -->
+  <path d="M 483.59999999999997 446.5 L 483.59999999999997 380.0 L 236.5 380.0 L 236.5 346.89000000000004" class="copper-bot" stroke-width="1.6" />
+  <path d="M 466.09999999999997 446.5 L 466.09999999999997 366.0 L 219.0 366.0 L 219.0 346.89000000000004" class="copper-top" stroke-width="1.6" />
+
+  <!-- I2C SDA/SCL traces to INA219 -->
+  <path d="M 430.40000000000003 446.5 L 430.40000000000003 394.0 L 716.0 394.0 L 716.0 348.5" class="copper-top" stroke-width="1.6" />
+
+  <!-- 5V Rail from Buck OUT+ to ESP32 VIN & Displays -->
+  <path d="M 814.0 492.0 L 814.0 226.0 L 649.5 226.0 L 649.5 271.5" class="copper-top" stroke-width="3" />
+
+  <!-- Display DIO/CLK signal traces -->
+  <path d="M 501.80000000000007 271.5 L 501.80000000000007 233.0 L 390.5 233.0 L 390.5 206.89" class="copper-top" stroke-width="1.6" />
+  <path d="M 483.59999999999997 271.5 L 483.59999999999997 247.0 L 649.5 247.0 L 649.5 206.89" class="copper-bot" stroke-width="1.6" />
+
+  </g>
 </svg>

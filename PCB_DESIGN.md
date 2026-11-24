@@ -8,11 +8,12 @@
 
 | Feature | Implementation | Engineering Purpose |
 |---|---|---|
-| **Overcurrent Protection** | 5A Automotive Blade Fuse (`F1`) on 12V IN | Instantly trips if fan stalls, shorts, or a wire pinches, preventing fire or trace damage. |
+| **Power Supply Short Protection** | Upstream 12V adapter foldback cutoff | Relies on power supply's internal short-circuit protection (matches OEM design, eliminates bulky board fuse). |
 | **Reverse Polarity Protection** | High-Current Schottky Diode (`D2`) on 12V IN | Blocks reverse voltage if 12V power adapter is wired backwards. |
 | **Inductive Kickback Clamping** | 1N4007 Diode (`D1`) across Fan (+) and (-) | Absorbs voltage spikes when fan PWM switches OFF, protecting the MOSFET and ESP32. |
 | **MOSFET Gate Fail-Safe** | 10kΩ Pull-Down Resistor (`R2`) on Gate | Forces MOSFET Gate to 0V (Fan OFF) during microcontroller boot, reset, or code crash. |
 | **Gate Inrush Limiting** | 220Ω Series Resistor (`R1`) on GPIO16 | Protects ESP32 GPIO16 output driver from capacitive gate inrush currents. |
+| **Passive Thermal Management** | 10–15mm magnetic standoff air gap + bottom louvers | No fan needed. Convective draft + standoff air gap shields electronics from hopper heat; prevents ash/soot ingress. |
 | **Star Grounding & Copper Pours** | Bottom-layer solid GND plane | High-current fan return (up to 3A) is isolated from sensitive MAX31865 SPI and INA219 I2C ground paths. |
 | **Heavy-Duty Trace Geometry** | 2.54mm (100 mil) traces for 12V / Fan / GND | Rated for 5A+ continuous current with < 10°C temperature rise on standard 1oz copper. |
 | **Socketed Architecture** | Female headers for all breakout modules | No fragile SMD hand-soldering. If a module fails in the field, pull and replace in seconds. |
